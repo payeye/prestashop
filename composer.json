@@ -1,0 +1,32 @@
+{
+  "name": "payeye/prestashop",
+  "description": "PayEye Payments",
+  "scripts": {
+    "phpstan": "_PS_ROOT_DIR_=.  vendor/bin/phpstan analyse --configuration=tests/phpstan/phpstan.neon",
+    "cs-fix": "php vendor/bin/php-cs-fixer fix"
+  },
+  "autoload": {
+    "psr-4": {
+      "PrestaShop\\Module\\PayEye\\": "src/"
+    },
+    "classmap": [
+      "payeye.php",
+      "controllers"
+    ]
+  },
+  "config": {
+    "sort-packages": true,
+    "preferred-install": "dist",
+    "optimize-autoloader": true,
+    "prepend-autoloader": false
+  },
+  "type": "prestashop-module",
+  "author": "PayEye",
+  "require-dev": {
+    "prestashop/php-dev-tools": "^4.3",
+    "phpstan/phpstan": "^1.9"
+  },
+  "require": {
+    "ext-json": "*"
+  }
+}
