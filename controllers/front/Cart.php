@@ -2,9 +2,14 @@
 
 use PrestaShop\Module\PayEye\Api;
 
+defined('_PS_VERSION_') || exit;
+
 class PayEyeCartModuleFrontController extends ModuleFrontController
 {
     use Api;
+
+    /** @var PayEye */
+    public $module;
 
     public function postProcess(): void
     {

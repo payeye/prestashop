@@ -3,7 +3,7 @@ includes:
 
 parameters:
   paths:
-    - ../../controllers
+    - ../../src
   excludePaths:
     - vendor/
   reportUnmatchedIgnoredErrors: false

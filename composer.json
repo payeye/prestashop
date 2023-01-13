@@ -23,8 +23,9 @@
   "type": "prestashop-module",
   "author": "PayEye",
   "require-dev": {
+    "phpstan/phpstan": "^1.9",
     "prestashop/php-dev-tools": "^4.3",
-    "phpstan/phpstan": "^1.9"
+    "symfony/var-dumper": "^5.4"
   },
   "require": {
     "ext-json": "*"
