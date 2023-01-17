@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prestashop-gitlab-deploy-update-deployments-binding
+  namespace: woocommerce-testshop
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prestashop-update-deployments
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: gitlab-deploy
