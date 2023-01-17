@@ -4,10 +4,14 @@ defined('_PS_VERSION_') || exit;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+use PrestaShop\Module\PayEye\Admin\Configuration\AdminFormHelper;
 use PrestaShop\Module\PayEye\Admin\Configuration\ConfigurationField;
 use PrestaShop\Module\PayEye\Admin\Configuration\HandleConfiguration;
+use PrestaShop\Module\PayEye\Database\CartMappingDatabase;
+use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
 use PrestaShop\Module\PayEye\Services\AuthConfig;
 use PrestaShop\Module\PayEye\Shared\Enums\ShippingType;
+use PrestaShop\Module\PayEye\Tool\Uuid;
 
 class PayEye extends PaymentModule
 {
@@ -21,7 +25,7 @@ class PayEye extends PaymentModule
         $this->name = 'payeye';
         $this->tab = 'payments_gateways';
         $this->version = '1.0.1';
-        $this->ps_versions_compliancy = ['min' => '1.7', 'max' => '1.7'];
+        $this->ps_versions_compliancy = ['min' => '1.6', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
         $this->is_eu_compatible = 1;
 
@@ -48,6 +52,8 @@ class PayEye extends PaymentModule
             $this->registerHook('paymentOptions') &&
             $this->registerHook('paymentReturn') &&
             $this->registerHook('moduleRoutes') &&
+            $this->registerHook('actionCartSave') &&
+            (new CartMappingDatabase())->createTable() &&
             $this->installDefaultConfiguration();
     }
 
@@ -100,54 +106,9 @@ class PayEye extends PaymentModule
     public function displayForm(): string
     {
         $carriers = Carrier::getCarriers($this->context->language->id, true);
+        $adminFormHelper = new AdminFormHelper($this);
 
-        $form['install'] = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Settings configurations for PayEye Payments'),
-                    'icon' => 'icon-th',
-                ],
-                'input' => [
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Admin Test'),
-                        'name' => ConfigurationField::ADMIN_TEST_MODE,
-                        'desc' => 'Show QR Code only for admin role. Enable mode before go live and check the PayEye flow.',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Yes'),
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('No'),
-                            ],
-                        ],
-                    ],
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('Shop ID'),
-                        'name' => ConfigurationField::SHOP_ID,
-                    ],
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('Public Key'),
-                        'name' => ConfigurationField::PUBLIC_KEY,
-                    ],
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('Private Key'),
-                        'name' => ConfigurationField::PRIVATE_KEY,
-                    ],
-                ],
-                'submit' => [
-                    'title' => $this->l('Save'),
-                    'class' => 'btn btn-default pull-right',
-                ],
-            ],
-        ];
+        $form['install'] = $adminFormHelper->installFormType();
 
         $carriers = array_map(function ($carrier) {
             return [
@@ -164,19 +125,7 @@ class PayEye extends PaymentModule
             ];
         }, $carriers);
 
-        $form['shippingMatching'] = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Carrier Matching for PayEye Payments'),
-                    'icon' => 'icon-th',
-                ],
-                'input' => $carriers,
-                'submit' => [
-                    'title' => $this->l('Save'),
-                    'class' => 'btn btn-default pull-right',
-                ],
-            ],
-        ];
+        $form['shippingMatching'] = $adminFormHelper->shippingMatchingFormType($carriers);
 
         $helper = new HelperForm();
 
@@ -223,6 +172,33 @@ class PayEye extends PaymentModule
         $matching = Configuration::get(ConfigurationField::SHIPPING_MATCHING);
 
         return $matching ? json_decode($matching, true) : [];
+    }
+
+    public function hookActionCartSave(array $payload): void
+    {
+        /** @var Cart $cart */
+        $cart = $payload['cart'];
+        $cartId = $cart->id;
+
+        $cartMapping = PayEyeCartMapping::findByCartId($cartId);
+
+        if ($cartMapping) {
+            return;
+        }
+
+        $cartMapping = new PayEyeCartMapping();
+        $cartMapping->setEntity(
+            PayEyeCartMappingEntity::builder()
+                ->setCartId($cart->id)
+                ->setOpen(false)
+                ->setUuid(Uuid::generate())
+        );
+
+        try {
+            $cartMapping->add();
+        } catch (PrestaShopDatabaseException|PrestaShopException $e) {
+            // do nothing
+        }
     }
 
     private function getConfigFieldsValuesForCarrierMatching(array $carrierMatching): array
