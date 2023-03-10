@@ -1,0 +1,5 @@
+{
+    "gitlab-token": {
+        "gitlab.com": "YOUR_ACCESS_TOKEN"
+    }
+}

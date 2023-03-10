@@ -2,16 +2,19 @@
 
 defined('_PS_VERSION_') || exit;
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
+use PayEye\Lib\Auth\AuthConfig;
+use PayEye\Lib\Enum\ShippingType;
+use PayEye\Lib\Env\Config;
+use PayEye\Lib\Tool\JsonHelper;
+use PayEye\Lib\Tool\Uuid;
 use PrestaShop\Module\PayEye\Admin\Configuration\AdminFormHelper;
 use PrestaShop\Module\PayEye\Admin\Configuration\ConfigurationField;
 use PrestaShop\Module\PayEye\Admin\Configuration\HandleConfiguration;
 use PrestaShop\Module\PayEye\Database\CartMappingDatabase;
 use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
-use PrestaShop\Module\PayEye\Services\AuthConfig;
-use PrestaShop\Module\PayEye\Shared\Enums\ShippingType;
-use PrestaShop\Module\PayEye\Tool\Uuid;
+use PrestaShop\Module\PayEye\Shared\ShippingMatch\ShippingMatchCollection;
 
 class PayEye extends PaymentModule
 {
@@ -20,6 +23,12 @@ class PayEye extends PaymentModule
     /** @var AuthConfig */
     public $authConfig;
 
+    /** @var ShippingMatchCollection */
+    public $shippingMatchCollection;
+
+    /** @var Config */
+    public $config;
+
     public function __construct()
     {
         $this->name = 'payeye';
@@ -27,6 +36,7 @@ class PayEye extends PaymentModule
         $this->version = '1.0.1';
         $this->ps_versions_compliancy = ['min' => '1.6', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
+        $this->controllers = ['Cart'];
         $this->is_eu_compatible = 1;
 
         $this->currencies = true;
@@ -43,6 +53,9 @@ class PayEye extends PaymentModule
             Configuration::get(ConfigurationField::PUBLIC_KEY),
             Configuration::get(ConfigurationField::PRIVATE_KEY)
         );
+
+        $this->shippingMatchCollection = new ShippingMatchCollection($this->getMatchedShippingProviders());
+        $this->config = Config::createFromArray(JsonHelper::getArrayFromJsonFile(__DIR__.'/config.json'));
     }
 
     public function install(): bool
@@ -53,6 +66,7 @@ class PayEye extends PaymentModule
             $this->registerHook('paymentReturn') &&
             $this->registerHook('moduleRoutes') &&
             $this->registerHook('actionCartSave') &&
+            $this->registerHook('actionFrontControllerSetMedia') &&
             (new CartMappingDatabase())->createTable() &&
             $this->installDefaultConfiguration();
     }
@@ -60,16 +74,30 @@ class PayEye extends PaymentModule
     public function hookModuleRoutes(): array
     {
         return [
-            'module-payeye-cart' => [
-                'controller' => 'Cart',
-                'rule' => self::NAMESPACE . '/carts',
-                'keywords' => [],
-                'params' => [
-                    'fc' => 'module',
-                    'module' => $this->name,
-                ],
-            ],
+            'module-payeye-cart' => $this->registerRouter('Cart', 'carts'),
+            'module-payeye-orders' => $this->registerRouter('Order', 'orders'),
+            'module-payeye-widget' => $this->registerRouter('Widget', 'widget'),
         ];
+    }
+
+    public function hookActionFrontControllerSetMedia(): void
+    {
+        $this->context->controller->registerJavascript(
+            'payeye',
+            'modules/'.$this->name.'/js/script.js',
+            [
+                'position' => 'footer',
+                'inline' => false,
+                'priority' => 1000,
+            ]
+        );
+
+        Media::addJsDef([
+            'payeye' => [
+                'platform' => 'PRESTASHOP',
+                'apiUrl' => $this->context->shop->getBaseURL().self::NAMESPACE,
+            ],
+        ]);
     }
 
     public function installDefaultConfiguration(): bool
@@ -81,11 +109,11 @@ class PayEye extends PaymentModule
     {
         $output = '';
 
-        if (Tools::isSubmit('submit' . $this->name)) {
-            $shopID = (string) Tools::getValue(ConfigurationField::SHOP_ID);
-            $publicKey = (string) Tools::getValue(ConfigurationField::PUBLIC_KEY);
-            $privateKey = (string) Tools::getValue(ConfigurationField::PRIVATE_KEY);
-            $mode = (string) Tools::getValue(ConfigurationField::ADMIN_TEST_MODE);
+        if (Tools::isSubmit('submit'.$this->name)) {
+            $shopID = (string)Tools::getValue(ConfigurationField::SHOP_ID);
+            $publicKey = (string)Tools::getValue(ConfigurationField::PUBLIC_KEY);
+            $privateKey = (string)Tools::getValue(ConfigurationField::PRIVATE_KEY);
+            $mode = (string)Tools::getValue(ConfigurationField::ADMIN_TEST_MODE);
 
             if (
                 Configuration::updateValue(ConfigurationField::SHOP_ID, $shopID) &&
@@ -100,7 +128,7 @@ class PayEye extends PaymentModule
             }
         }
 
-        return $output . $this->displayForm();
+        return $output.$this->displayForm();
     }
 
     public function displayForm(): string
@@ -114,7 +142,7 @@ class PayEye extends PaymentModule
             return [
                 'type' => 'select',
                 'label' => $carrier['name'],
-                'name' => ConfigurationField::SHIPPING_MATCHING . $carrier['id_carrier'],
+                'name' => ConfigurationField::SHIPPING_MATCHING.$carrier['id_carrier'],
                 'desc' => $this->l('Select shipping providers for your carrier'),
                 'carrierId' => $carrier['id_carrier'],
                 'options' => [
@@ -132,8 +160,8 @@ class PayEye extends PaymentModule
         $helper->table = $this->table;
         $helper->name_controller = $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex . '&' . http_build_query(['configure' => $this->name]);
-        $helper->submit_action = 'submit' . $this->name;
+        $helper->currentIndex = AdminController::$currentIndex.'&'.http_build_query(['configure' => $this->name]);
+        $helper->submit_action = 'submit'.$this->name;
         $helper->default_form_language = $this->context->language->id;
         $helper->fields_value = $this->getConfigFieldsValues($carriers);
 
@@ -167,7 +195,7 @@ class PayEye extends PaymentModule
         return Configuration::get(ConfigurationField::ADMIN_TEST_MODE);
     }
 
-    public function getMatchedShippingProviders(): array
+    private function getMatchedShippingProviders(): array
     {
         $matching = Configuration::get(ConfigurationField::SHIPPING_MATCHING);
 
@@ -179,6 +207,10 @@ class PayEye extends PaymentModule
         /** @var Cart $cart */
         $cart = $payload['cart'];
         $cartId = $cart->id;
+
+        if ($cartId === null) {
+            return;
+        }
 
         $cartMapping = PayEyeCartMapping::findByCartId($cartId);
 
@@ -235,6 +267,27 @@ class PayEye extends PaymentModule
             [
                 'id' => ShippingType::SELF_PICKUP,
                 'name' => $this->l('Self pickup'),
+            ],
+            [
+                'id' => ShippingType::INPOST,
+                'name' => $this->l('Inpost'),
+            ],
+            [
+                'id' => ShippingType::DHL,
+                'name' => $this->l('Pickup Point DHL'),
+            ],
+        ];
+    }
+
+    private function registerRouter(string $controller, string $path): array
+    {
+        return [
+            'controller' => $controller,
+            'rule' => self::NAMESPACE.'/'.$path,
+            'keywords' => [],
+            'params' => [
+                'fc' => 'module',
+                'module' => $this->name,
             ],
         ];
     }

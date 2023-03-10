@@ -60,6 +60,28 @@ class PayEyeCartMapping extends ObjectModel
             return null;
         }
 
+        return self::buildEntity($result);
+    }
+
+    public static function findByCartUuid(string $cartUuid): ?PayEyeCartMappingEntity
+    {
+        $query = new DbQuery();
+        $query
+            ->select('*')
+            ->from('payeye_cart_mapping')
+            ->where('uuid = "' . pSQL($cartUuid) . '"');
+
+        $result = Db::getInstance()->getRow($query);
+
+        if (!$result) {
+            return null;
+        }
+
+        return self::buildEntity($result);
+    }
+
+    private static function buildEntity(array $result): PayEyeCartMappingEntity
+    {
         return PayEyeCartMappingEntity::builder()
             ->setId($result['id_payeye_cart_mapping'])
             ->setOpen($result['open'])

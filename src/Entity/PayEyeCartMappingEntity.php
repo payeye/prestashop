@@ -4,7 +4,7 @@ namespace PrestaShop\Module\PayEye\Entity;
 
 class PayEyeCartMappingEntity
 {
-    /** @var null|string */
+    /** @var string|null */
     public $id;
 
     /** @var string */

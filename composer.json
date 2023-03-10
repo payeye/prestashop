@@ -15,6 +15,11 @@
       "controllers"
     ]
   },
+  "autoload-dev": {
+    "psr-4": {
+      "PayEye\\Tests\\": "tests/"
+    }
+  },
   "config": {
     "sort-packages": true,
     "preferred-install": "dist",
@@ -25,10 +30,20 @@
   "author": "PayEye",
   "require-dev": {
     "phpstan/phpstan": "^1.9",
+    "phpunit/phpunit": "^9.6.3",
     "prestashop/php-dev-tools": "^4.3",
-    "symfony/var-dumper": "^5.4"
+    "symfony/var-dumper": "^5.4",
+    "ext-curl": "*"
   },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://gitlab.com/api/v4/group/52451105/-/packages/composer/packages.json"
+    }
+  ],
   "require": {
-    "ext-json": "*"
+    "ext-json": "*",
+    "chillerlan/php-qrcode": "^3.4.1",
+    "payeye/lib": "1.12.0"
   }
 }

@@ -11,16 +11,14 @@ use PayEye\Lib\Exception\PayEyePaymentException;
 use PayEye\Lib\Model\Cart as PayEyeCart;
 use PayEye\Lib\Model\Shop as PayEyeShop;
 use PayEye\Lib\Service\AmountService;
-use PayEye\Lib\Tool\Uuid;
 use PrestaShop\Module\PayEye\Controller\FrontController;
 use PrestaShop\Module\PayEye\Service\CartService;
 use PrestaShop\Module\PayEye\Service\ShippingService;
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
-use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 
 defined('_PS_VERSION_') || exit;
 
-class PayEyeCartModuleFrontController extends FrontController
+class PayEyeOrderModuleFrontController extends FrontController
 {
     /** @var PayEye */
     public $module;
@@ -41,47 +39,51 @@ class PayEyeCartModuleFrontController extends FrontController
                 throw new CartNotFoundException();
             }
 
-            $this->context->cart = new Cart($cartMapping->id_cart);
+            $cart = new Cart($cartMapping->id_cart);
 
-            $customer = new Customer($this->context->cart->id_customer);
-            $customer->firstname = 'Dupa';
+            $customer = new Customer();
+            $customer->firstname = 'Bartosz';
             $customer->lastname = 'Bury';
             $customer->email = 'bartosz.bury@payeye.com';
             $customer->last_passwd_gen = date('Y-m-d H:i:s', strtotime('-'.Configuration::get('PS_PASSWD_TIME_FRONT').'minutes'));
             $customer->secure_key = md5(uniqid((string)random_int(0, mt_getrandmax()), true));
-            $customer->setWsPasswd(Uuid::generate());
+            $customer->setWsPasswd((string)\Ramsey\Uuid\Uuid::uuid4());
             $customer->is_guest = true;
             $customer->save();
 
+            $cart->id_customer = $customer->id;
             $this->context->customer = $customer;
 
-            $address = new Address($this->context->cart->id_address_delivery);
+            $this->context->cart = $cart;
+
+            $address = new Address(Context::getContext()->cart->id_address_delivery);
             $address->id_country = Country::getByIso($request->getShipping()->getAddress()->getCountry());
             $address->alias = 'PayEye Address';
             $address->lastname = 'Bury';
             $address->firstname = 'Bartosz';
-            $address->address1 = 'aleja Wiśniowa 85B/(P)';
+            $address->address1 = 'aleja Wiśniowa 85B/01';
             $address->city = 'Wrocław';
-            $address->postcode = $request->getShipping()->getAddress()->getPostCode();
+            $address->postcode = '53-126';
             $address->save();
 
-            $this->context->cart->id_customer = $customer->id;
             $this->context->cart->id_address_delivery = $address->id;
             $this->context->cart->id_address_invoice = $address->id;
+            $this->context->cart->id_carrier = $cart->id_carrier;
 
             $checkoutSessionCore = new CheckoutSessionCore(
                 $this->context, new DeliveryOptionsFinder(
                     $this->context,
-                    $this->context->getTranslator(),
+                    Context::getContext()->getTranslator(),
                     new ObjectPresenter(),
-                    new PriceFormatter()
+                    new \PrestaShop\PrestaShop\Adapter\Product\PriceFormatter()
                 )
             );
 
             $checkoutSessionCore->setIdAddressDelivery($address->id);
 
             $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
-            $shippingId = $this->getShippingId($shippingService, $request);
+
+            $shippingId = $shippingService->getDefaultShipping($request->getDeliveryType())->id;
 
             $this->context->cart->setDeliveryOption([
                 $address->id => $shippingId.",",
@@ -89,8 +91,23 @@ class PayEyeCartModuleFrontController extends FrontController
 
             $cartService = new CartService($this->context->cart, $amountService);
 
+            $currency = $this->context->currency;
+            $total = (float)$this->context->cart->getOrderTotal(true, Cart::BOTH);
+
             $this->context->cart->secure_key = $customer->secure_key;
             $this->context->cart->save();
+
+            $this->module->validateOrder(
+                $this->context->cart->id,
+                (int)Configuration::get('PS_OS_BANKWIRE'), // dowiedziec się co to jest
+                $total,
+                $this->module->displayName,
+                null,
+                [],
+                (int)$currency->id,
+                false,
+                $customer->secure_key
+            );
 
             $cartResponse = CartResponseModel::builder()
                 ->setShop($this->getShop())
@@ -142,22 +159,5 @@ class PayEyeCartModuleFrontController extends FrontController
             $cart->currency,
             $cart->products
         );
-    }
-
-    private function getShippingId(ShippingService $shippingService, CartRequestModel $cartRequestModel): ?string
-    {
-        if (empty($shippingService->getShippingMethods())) {
-            return null;
-        }
-
-        $shipping = array_filter($shippingService->getShippingMethods(), static function ($shipping) use ($cartRequestModel) {
-            return $shipping->id === $cartRequestModel->getShippingId();
-        });
-
-        if (empty($shipping)) {
-            return $shippingService->getDefaultShipping($cartRequestModel->getDeliveryType())->id ?? null;
-        }
-
-        return $cartRequestModel->getShippingId();
     }
 }
