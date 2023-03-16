@@ -2,7 +2,7 @@
 
 namespace PrestaShop\Module\PayEye\Admin\Configuration;
 
-class AdminFormHelper
+class AdminFormConfiguration
 {
     /** @var \Module */
     private $module;
@@ -12,7 +12,7 @@ class AdminFormHelper
         $this->module = $module;
     }
 
-    public function installFormType(): array
+    public function authFormType(): array
     {
         return [
             'form' => [

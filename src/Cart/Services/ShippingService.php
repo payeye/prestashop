@@ -1,6 +1,8 @@
 <?php
 
-namespace PrestaShop\Module\PayEye\Service;
+declare(strict_types=1);
+
+namespace PrestaShop\Module\PayEye\Cart\Services;
 
 use PayEye\Lib\Model\ShippingMethod;
 use PayEye\Lib\Service\AmountService;
@@ -8,7 +10,7 @@ use PayEye\Lib\Service\AmountService;
 class ShippingService
 {
     /** @var ShippingMethod[] */
-    private $shippingMethods = [];
+    public $shippingMethods = [];
 
     /** @var array */
     private $deliveryOptions;
@@ -26,14 +28,6 @@ class ShippingService
         $this->payeye = $payEye;
 
         $this->availableShippingMethods();
-    }
-
-    /**
-     * @return ShippingMethod[]
-     */
-    public function getShippingMethods(): array
-    {
-        return $this->shippingMethods;
     }
 
     public function getDefaultShipping(?string $shippingType): ?ShippingMethod
@@ -58,20 +52,44 @@ class ShippingService
         $shippingMatchCollection = $this->payeye->shippingMatchCollection;
 
         foreach ($this->deliveryOptions as $deliveryOption) {
-            $findByCarrier = $shippingMatchCollection->findByCarrierId($deliveryOption['id']);
+            $findByCarrier = $shippingMatchCollection->findByCarrierId((string) $deliveryOption['id']);
 
             if ($findByCarrier === null || empty($findByCarrier->getProvider())) {
                 continue;
             }
 
             $regularCost = $this->amountService->convertFloatToInteger($deliveryOption['price_with_tax']);
+            $price = $regularCost;
+
+            if ($this->isFreeShipping(\Context::getContext()->cart, $deliveryOption)) {
+                $price = 0;
+            }
 
             $this->shippingMethods[] = ShippingMethod::builder()
-                ->setId($deliveryOption['id'])
+                ->setId((string) $deliveryOption['id'])
                 ->setLabel($deliveryOption['name'])
-                ->setCost($regularCost)
+                ->setCost($price)
                 ->setRegularCost($regularCost)
                 ->setType($findByCarrier->getProvider());
         }
+    }
+
+    private function isFreeShipping(\Cart $cart, array $carrier): bool
+    {
+        $free = false;
+
+        if ($carrier['is_free']) {
+            return true;
+        }
+
+        foreach ($cart->getCartRules() as $rule) {
+            if ($rule['free_shipping'] && !$rule['carrier_restriction']) {
+                $free = true;
+
+                break;
+            }
+        }
+
+        return $free;
     }
 }
