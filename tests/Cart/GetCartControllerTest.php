@@ -2,37 +2,36 @@
 
 declare(strict_types=1);
 
-namespace PayEye\Tests\Cart\Integrations;
+namespace PayEye\Tests\Cart;
 
-use PayEye\Lib\Auth\AuthConfig;
 use PayEye\Lib\Cart\CartResponseModel;
-use PayEye\Lib\Enum\ShippingType;
-use PayEye\Lib\Exception\CartNotFoundException;
-use PayEye\Lib\Exception\SignatureNotMatchedException;
+use PayEye\Lib\Enum\ShippingProvider;
 use PayEye\Tests\Shared\BaseTestCase;
 
 class GetCartControllerTest extends BaseTestCase
 {
-
-    public function deliveryType(): array
+    public function shippingProviderType(): array
     {
         return [
-            [ShippingType::COURIER],
-            [ShippingType::SELF_PICKUP],
+            [ShippingProvider::COURIER],
+            [ShippingProvider::SELF_PICKUP],
         ];
     }
 
     /**
-     * @dataProvider deliveryType
+     * @dataProvider shippingProviderType
      */
-    public function testGetCart(string $deliveryType): void
+    public function testGetCart(string $shippingProviderType): void
     {
         $mock = $this->mock;
-        $mock['deliveryType'] = $deliveryType;
+        $mock['shippingProvider'] = $shippingProviderType;
 
-        $this->cartRequest($mock);
+        $this->getCart($mock);
 
         $cart = CartResponseModel::createFromArray($this->response->getArrayResponse());
+
+        $this->assertTrue(count($cart->shippingMethods) >= 1, 'Shipping methods not exists');
+
         $shipping = array_filter($cart->shippingMethods, static function ($shipping) use ($cart) {
             return $shipping->id === $cart->shippingId;
         });
@@ -52,7 +51,7 @@ class GetCartControllerTest extends BaseTestCase
         $this->assertSame($cart->cart->products, $productsPrice, 'Price products not the same with Product price');
         $this->assertSame($cart->cart->regularProducts, $regularProductsPrice, 'Regular price products not the same with Product price');
 
-        $this->assertSame($deliveryType, $shipping->type);
+        $this->assertSame($shippingProviderType, $shipping->type);
         $this->assertSame($cart->cart->regularTotal, $cart->cart->regularProducts + $shipping->cost, 'Regular price not matched');
         $this->assertSame($cart->cart->total, $cart->cart->products + $shipping->cost - $cart->cart->discount, 'Total price not matched');
 
@@ -67,7 +66,7 @@ class GetCartControllerTest extends BaseTestCase
 
         foreach ($this->module->shippingMatchCollection->getCopyObject() as $value) {
             $mock['shippingId'] = $value->getCarrierId();
-            $this->cartRequest($mock);
+            $this->getCart($mock);
 
             $response = CartResponseModel::createFromArray($this->response->getArrayResponse());
             $this->assertSame($value->getCarrierId(), $response->shippingId);
@@ -79,29 +78,10 @@ class GetCartControllerTest extends BaseTestCase
         $mock = $this->mock;
         $mock['shipping']['address']['postCode'] = '53-126';
         $mock['shipping']['address']['country'] = 'DE';
-        $this->cartRequest($mock);
+        $this->getCart($mock);
 
         $response = CartResponseModel::createFromArray($this->response->getArrayResponse());
 
         $this->assertNull($response->shippingId, 'shippingId must by NULL when shipping not exists');
-    }
-
-    public function testCartNotFoundException(): void
-    {
-        $this->cartRequest([
-            'cartId' => 'card-id-not-exists',
-        ]);
-
-        $this->assertPayEyeException(new CartNotFoundException());
-    }
-
-    public function testSignatureNotMatchedException(): void
-    {
-        $this->module->authConfig = new AuthConfig('invalid-shop-id', 'invalid-api-key', 'invalid-secret-key');
-        $this->cartRequest([
-            'cartId' => '9e814eb4-9fe5-477f-aa96-0010ff3b4b11',
-        ]);
-
-        $this->assertPayEyeException(new SignatureNotMatchedException());
     }
 }

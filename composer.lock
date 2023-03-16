@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ec15e4c9fe372dd8972472de34b1c64a",
+    "content-hash": "0dad41431e263d9afeb9be1b2e8fdbd0",
     "packages": [
         {
             "name": "chillerlan/php-qrcode",
@@ -148,16 +148,16 @@
         },
         {
             "name": "payeye/lib",
-            "version": "1.12.0",
+            "version": "1.14.3",
             "source": {
                 "type": "git",
                 "url": "https://gitlab.com/payeye2/frontend216/ecommerce/ecommerce-php-library.git",
-                "reference": "c8505e970df40516c633490d2d457ad36136558a"
+                "reference": "19e9983b3d0cdc6f8b360da137f38ae9a8e74769"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/42726542/packages/composer/archives/payeye/lib.zip?sha=c8505e970df40516c633490d2d457ad36136558a",
-                "reference": "c8505e970df40516c633490d2d457ad36136558a",
+                "url": "https://gitlab.com/api/v4/projects/42726542/packages/composer/archives/payeye/lib.zip?sha=19e9983b3d0cdc6f8b360da137f38ae9a8e74769",
+                "reference": "19e9983b3d0cdc6f8b360da137f38ae9a8e74769",
                 "shasum": ""
             },
             "require": {

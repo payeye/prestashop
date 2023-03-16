@@ -1,5 +1,6 @@
 <?php
 
+use PrestaShop\Module\PayEye\Database\Database;
 use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
 
 class PayEyeCartMapping extends ObjectModel
@@ -16,8 +17,8 @@ class PayEyeCartMapping extends ObjectModel
     public $open;
 
     public static $definition = [
-        'table' => 'payeye_cart_mapping',
-        'primary' => 'id_payeye_cart_mapping',
+        'table' => Database::CART,
+        'primary' => 'id_' . Database::CART,
         'fields' => [
             'uuid' => [
                 'type' => self::TYPE_STRING,
@@ -51,7 +52,7 @@ class PayEyeCartMapping extends ObjectModel
         $query = new DbQuery();
         $query
             ->select('*')
-            ->from('payeye_cart_mapping')
+            ->from(Database::CART)
             ->where('id_cart =' . (int) $cartId);
 
         $result = Db::getInstance()->getRow($query);
@@ -68,7 +69,7 @@ class PayEyeCartMapping extends ObjectModel
         $query = new DbQuery();
         $query
             ->select('*')
-            ->from('payeye_cart_mapping')
+            ->from(Database::CART)
             ->where('uuid = "' . pSQL($cartUuid) . '"');
 
         $result = Db::getInstance()->getRow($query);
@@ -83,7 +84,7 @@ class PayEyeCartMapping extends ObjectModel
     private static function buildEntity(array $result): PayEyeCartMappingEntity
     {
         return PayEyeCartMappingEntity::builder()
-            ->setId($result['id_payeye_cart_mapping'])
+            ->setId($result[self::$definition['primary']])
             ->setOpen($result['open'])
             ->setCartId($result['id_cart'])
             ->setUuid($result['uuid']);

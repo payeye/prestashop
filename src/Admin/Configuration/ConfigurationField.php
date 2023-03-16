@@ -2,7 +2,9 @@
 
 namespace PrestaShop\Module\PayEye\Admin\Configuration;
 
-defined('_PS_VERSION_') || exit;
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
 
 abstract class ConfigurationField
 {
@@ -12,10 +14,12 @@ abstract class ConfigurationField
     public const ADMIN_TEST_MODE = 'PAYEYE_ADMIN_TEST_MODE';
     public const SHIPPING_MATCHING = 'PAYEYE_SHIPPING_MATCHING';
 
+    public const PAYMENT_STATUS_WAITING = 'PAYEYE_PAYMENT_STATUS_WAITING';
+
     /**
      * @return string[]
      */
-    public static function getAll(): array
+    public static function getUninstallFields(): array
     {
         return [
             self::SHOP_ID,
