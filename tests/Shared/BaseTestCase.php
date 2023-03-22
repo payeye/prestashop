@@ -55,6 +55,7 @@ class BaseTestCase extends WebTestCase
             'shipping' => [
                 'firstName' => 'Janina',
                 'lastName' => 'Kowalska',
+                'label' => 'Dom',
                 'address' => [
                     'street' => 'aleja Ogryskowa',
                     'buildingNumber' => '12B',

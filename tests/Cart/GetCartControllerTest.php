@@ -84,4 +84,28 @@ class GetCartControllerTest extends BaseTestCase
 
         $this->assertNull($response->shippingId, 'shippingId must by NULL when shipping not exists');
     }
+
+    public function testGetCartWhenShippingAndBillingIsNull(): void
+    {
+        $mock = $this->mock;
+        $mock['shipping'] = null;
+        $mock['billing'] = null;
+
+        $this->getCart($mock);
+
+        $cart = CartResponseModel::createFromArray($this->response->getArrayResponse());
+
+        $this->assertSame($cart->shippingMethods, []);
+
+        $productsPrice = 0;
+        $regularProductsPrice = 0;
+
+        foreach ($cart->products as $product) {
+            $productsPrice += $product->price * $product->quantity;
+            $regularProductsPrice += $product->regularPrice * $product->quantity;
+        }
+
+        $this->assertSame($cart->cart->products, $productsPrice, 'Price products not the same with Product price');
+        $this->assertSame($cart->cart->regularProducts, $regularProductsPrice, 'Regular price products not the same with Product price');
+    }
 }

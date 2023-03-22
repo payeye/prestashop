@@ -62,7 +62,7 @@ class PayEyeCartModuleFrontController extends FrontController
     {
         $amountService = new AmountService();
 
-        $customer = $this->createCustomer();
+        $customer = $this->createCustomer($request);
 
         $this->context->customer = $customer;
 
@@ -114,12 +114,21 @@ class PayEyeCartModuleFrontController extends FrontController
      * @throws PrestaShopException
      * @throws Exception
      */
-    private function createCustomer(): Customer
+    private function createCustomer(CartRequestModel $request): Customer
     {
         $customer = new Customer($this->context->cart->id_customer);
-        $customer->firstname = 'Bartosz';
-        $customer->lastname = 'Bury';
-        $customer->email = 'bartosz.bury@payeye.com';
+        $billing = $request->getBilling();
+
+        if ($billing) {
+            $customer->firstname = $billing->getFirstName();
+            $customer->lastname = $billing->getLastName();
+            $customer->email = $billing->getEmail();
+        }else {
+            $customer->firstname = 'null';
+            $customer->lastname = 'null';
+            $customer->email = 'ghost@email';
+        }
+
         $customer->last_passwd_gen = date('Y-m-d H:i:s', strtotime('-' . Configuration::get('PS_PASSWD_TIME_FRONT') . 'minutes'));
         $customer->secure_key = md5(uniqid((string) random_int(0, mt_getrandmax()), true));
         $customer->setWsPasswd(Uuid::generate());
@@ -135,13 +144,26 @@ class PayEyeCartModuleFrontController extends FrontController
     private function createAddress(CartRequestModel $request): Address
     {
         $address = new Address($this->context->cart->id_address_delivery);
-        $address->id_country = Country::getByIso($request->getShipping()->getAddress()->getCountry());
-        $address->alias = 'PayEye Address';
-        $address->lastname = 'Bury';
-        $address->firstname = 'Bartosz';
-        $address->address1 = 'aleja Wiśniowa 85B/(P)';
-        $address->city = 'Wrocław';
-        $address->postcode = $request->getShipping()->getAddress()->getPostCode();
+        $shipping = $request->getShipping();
+
+        if ($shipping) {
+            $address->id_country = Country::getByIso($shipping->getAddress()->getCountry());
+            $address->alias = $shipping->getLabel();
+            $address->firstname = $shipping->getFirstName();
+            $address->lastname = $shipping->getLastName();
+            $address->address1 = $shipping->getAddress()->getFirstLine();
+            $address->city = $shipping->getAddress()->getCity();
+            $address->postcode = $shipping->getAddress()->getPostCode();
+        } else {
+            $address->id_country = 0;
+            $address->alias = 'null';
+            $address->firstname = 'null';
+            $address->lastname = 'null';
+            $address->address1 = 'null';
+            $address->city = 'null';
+            $address->postcode = 'null';
+        }
+
         $address->save();
 
         return $address;
