@@ -10,8 +10,8 @@ Service (type NodePort)
 PVC
 Deployment
 as well as two secrets that are not commited to the repo (example for dev3c env):
-prestashop-dev3c-app-secret
-prestashopdb-dev3c-externaldb
+prestashop-dev3c
+prestashop-externaldb-dev3c
 
 
 The definitions of those secrets will not be commited to the repository for the security reasons.
@@ -21,11 +21,11 @@ Please find below templates (the passwords MUST be base64 encoded firs!):
 apiVersion: v1
 kind: Secret
 metadata:
-  name: prestashop-dev3c-app-secret
+  name: prestashop-dev3c
   namespace: "woocommerce-testshop"
   labels:
     app.kubernetes.io/name: prestashop
-    helm.sh/chart: prestashop-16.0.0
+    helm.sh/chart: prestashop-15.3.6
     app.kubernetes.io/instance: prestashop-dev3c
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -38,11 +38,11 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: prestashopdb-dev3c-externaldb
+  name: prestashop-externaldb-dev3c
   namespace: "woocommerce-testshop"
   labels:
     app.kubernetes.io/name: prestashop
-    helm.sh/chart: prestashop-16.0.0
+    helm.sh/chart: prestashop-15.3.6
     app.kubernetes.io/instance: prestashop-dev3c
     app.kubernetes.io/managed-by: Helm
 type: Opaque
@@ -53,7 +53,11 @@ data:
 Deployment procedure:
 ```bash
 kubectl create -f namespace.yml
-kubectl create -f deploy_dev3c.yml
+kubectl create -f secret_template.yml
+```
+and inside environemnt folder overlays/dev3c
+```bash
+kustomize build --load-restrictor=LoadRestrictionsNone --enable-helm | kubectl apply -f -
 ```
 Once the application is deployed it must be additionaly configured:
 ```
