@@ -25,6 +25,8 @@ class PayEyePromoCodeModuleFrontController extends FrontController
             }
 
             $cart = new Cart($entity->id_cart);
+            $this->context->cart = $cart;
+
             $id = CartRule::getIdByCode($request->getPromoCode());
 
             if ($id === false) {
@@ -34,6 +36,16 @@ class PayEyePromoCodeModuleFrontController extends FrontController
             $response = PromoCodeResponseModel::builder();
 
             if ($this->isRequestMethod('POST')) {
+                $cartRule = new CartRule($id);
+
+                if (Validate::isLoadedObject($cartRule) === false) {
+                    throw new InvalidCouponException();
+                }
+
+                if ($cartRule->checkValidity($this->context, false, true)) {
+                    throw new InvalidCouponException();
+                }
+
                 $cart->addCartRule((int) $id);
                 $this->exitWithResponse($response->setSignatureFrom(SignatureFrom::CART_COUPON_APPLY_RESPONSE)->toArray());
             }

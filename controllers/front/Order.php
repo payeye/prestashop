@@ -5,6 +5,7 @@ declare(strict_types=1);
 use PayEye\Lib\Cart\CartResponseModel;
 use PayEye\Lib\Exception\CartContentNotMatchedException;
 use PayEye\Lib\Exception\CartNotFoundException;
+use PayEye\Lib\Exception\OrderAlreadyExistsException;
 use PayEye\Lib\Exception\PayEyePaymentException;
 use PayEye\Lib\Order\OrderRequestModel;
 use PayEye\Lib\Order\OrderResponseModel;
@@ -70,6 +71,10 @@ class PayEyeOrderModuleFrontController extends FrontController
 
         $this->context->cart->secure_key = $this->context->customer->secure_key;
         $this->context->cart->save();
+
+        if (Validate::isLoadedObject($this->context->cart) && $this->context->cart->orderExists()) {
+            throw new OrderAlreadyExistsException();
+        }
 
         $this->module->validateOrder(
             $this->context->cart->id,

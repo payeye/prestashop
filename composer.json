@@ -45,7 +45,7 @@
   "require": {
     "ext-json": "*",
     "chillerlan/php-qrcode": "^3.4.1",
-    "payeye/lib": "1.16.1"
+    "payeye/lib": "1.16.2"
   },
   "archive": {
     "exclude": [
