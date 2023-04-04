@@ -43,7 +43,7 @@ build:
     ENV: dev3b
   image: ${BUILDER_IMAGE}
   script:
-    - composer config gitlab-token.gitlab.com $ACCESS_TOKEN
+    - composer config gitlab-token.gitlab.com ${DEPLOY_TOKEN_PHP_LIBRARY%:*} ${DEPLOY_TOKEN_PHP_LIBRARY##*:}
     - composer install --no-dev --optimize-autoloader
     - composer archive --format=zip --dir . --file ${MODULE_NAME}
   cache:
