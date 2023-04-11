@@ -51,7 +51,7 @@ class PayEyeOrderModuleFrontController extends FrontController
                 throw new CartContentNotMatchedException();
             }
 
-            $this->exitWithResponse($this->createOrder($amountService)->toArray());
+            $this->exitWithResponse($this->createOrder($amountService, $request)->toArray());
         } catch (PayEyePaymentException $exception) {
             $this->exitWithPayEyeExceptionResponse($exception);
         } catch (Exception|Throwable $exception) {
@@ -64,7 +64,7 @@ class PayEyeOrderModuleFrontController extends FrontController
      * @throws PrestaShopDatabaseException
      * @throws Exception
      */
-    private function createOrder(AmountService $amountService): OrderResponseModel
+    private function createOrder(AmountService $amountService,OrderRequestModel $requestModel): OrderResponseModel
     {
         $currency = $this->context->currency;
         $total = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
@@ -91,6 +91,11 @@ class PayEyeOrderModuleFrontController extends FrontController
         $this->order = new Order($this->module->currentOrder);
 
         $order = $this->order;
+
+        if ($requestModel->getShipping()->getPickupPoint()) {
+            $order->note = $requestModel->getShipping()->getPickupPoint()->getName() .', ' . $requestModel->getShipping()->getAddress()->getFullAddress();
+            $order->save();
+        }
 
         return OrderResponseModel::builder()
             ->setCheckoutUrl($this->checkoutUrl())
