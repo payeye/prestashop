@@ -1,12 +1,9 @@
 <?php
 
 use PrestaShop\Module\PayEye\Database\Database;
-use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
 
 class PayEyeCartMapping extends ObjectModel
 {
-    public $id;
-
     /** @var string */
     public $uuid;
 
@@ -37,17 +34,7 @@ class PayEyeCartMapping extends ObjectModel
         ],
     ];
 
-    public function setEntity(PayEyeCartMappingEntity $entity): self
-    {
-        $this->id = $entity->id;
-        $this->uuid = $entity->uuid;
-        $this->id_cart = $entity->id_cart;
-        $this->open = $entity->open;
-
-        return $this;
-    }
-
-    public static function findByCartId(int $cartId): ?PayEyeCartMappingEntity
+    public static function findByCartId(int $cartId): ?PayEyeCartMapping
     {
         $query = new DbQuery();
         $query
@@ -57,14 +44,10 @@ class PayEyeCartMapping extends ObjectModel
 
         $result = Db::getInstance()->getRow($query);
 
-        if (!$result) {
-            return null;
-        }
-
-        return self::buildEntity($result);
+        return self::createObject($result);
     }
 
-    public static function findByCartUuid(string $cartUuid): ?PayEyeCartMappingEntity
+    public static function findByCartUuid(string $cartUuid): ?PayEyeCartMapping
     {
         $query = new DbQuery();
         $query
@@ -74,19 +57,20 @@ class PayEyeCartMapping extends ObjectModel
 
         $result = Db::getInstance()->getRow($query);
 
+        return self::createObject($result);
+    }
+
+    private static function createObject($result): ?self
+    {
         if (!$result) {
             return null;
         }
 
-        return self::buildEntity($result);
-    }
+        $object = new static();
+        $object->hydrate($result);
 
-    private static function buildEntity(array $result): PayEyeCartMappingEntity
-    {
-        return PayEyeCartMappingEntity::builder()
-            ->setId($result[self::$definition['primary']])
-            ->setOpen($result['open'])
-            ->setCartId($result['id_cart'])
-            ->setUuid($result['uuid']);
+        $object->open = (bool) $object->open;
+
+        return $object;
     }
 }

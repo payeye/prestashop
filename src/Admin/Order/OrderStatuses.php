@@ -15,11 +15,15 @@ class OrderStatuses
     /** @var int */
     private $rejected;
 
-    public function __construct(int $orderCreated, int $orderSuccess, int $orderRejected)
+    /** @var int */
+    private $returnRequest;
+
+    public function __construct(int $orderCreated, int $orderSuccess, int $orderRejected, int $returnRequest)
     {
         $this->created = $orderCreated;
         $this->success = $orderSuccess;
         $this->rejected = $orderRejected;
+        $this->returnRequest = $returnRequest;
     }
 
     public function getCreated(): int
@@ -35,5 +39,10 @@ class OrderStatuses
     public function getRejected(): int
     {
         return $this->rejected;
+    }
+
+    public function getReturnRequest(): int
+    {
+        return $this->returnRequest;
     }
 }

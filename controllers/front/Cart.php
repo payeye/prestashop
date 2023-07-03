@@ -14,7 +14,6 @@ use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
-use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 
@@ -40,12 +39,15 @@ class PayEyeCartModuleFrontController extends FrontController
             }
 
             if ($entityCartMapping->open === false) {
-                $this->setCartOpen($entityCartMapping);
+                $entityCartMapping->open = true;
+                $entityCartMapping->update();
             }
 
             $this->context->cart = new Cart($entityCartMapping->id_cart);
 
-            $this->exitWithResponse($this->cartResponse($request)->toArray());
+            $response = $this->cartResponse($request);
+
+            $this->exitWithResponse($response->toArray());
         } catch (PayEyePaymentException $exception) {
             $this->exitWithPayEyeExceptionResponse($exception);
         } catch (Exception|Throwable $exception) {
@@ -66,11 +68,12 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $this->context->customer = $customer;
 
-        $address = $this->createAddress($request);
+        $deliveryAddress = $this->createDeliveryAddress($request);
+        $invoiceAddress = $this->createInvoiceAddress($request);
 
         $this->context->cart->id_customer = $customer->id;
-        $this->context->cart->id_address_delivery = $address->id;
-        $this->context->cart->id_address_invoice = $address->id;
+        $this->context->cart->id_address_delivery = $deliveryAddress->id;
+        $this->context->cart->id_address_invoice = $invoiceAddress->id;
 
         $checkoutSessionCore = new CheckoutSessionCore(
             $this->context, new DeliveryOptionsFinder(
@@ -81,13 +84,13 @@ class PayEyeCartModuleFrontController extends FrontController
             )
         );
 
-        $checkoutSessionCore->setIdAddressDelivery($address->id);
+        $checkoutSessionCore->setIdAddressDelivery($deliveryAddress->id);
 
         $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
         $shippingId = $this->getShippingId($shippingService, $request);
 
         $this->context->cart->setDeliveryOption([
-            $address->id => $shippingId . ',',
+            $deliveryAddress->id => $shippingId . ',',
         ]);
 
         $cartResponseService = new CartResponseService($this->context->cart, $amountService);
@@ -123,7 +126,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $customer->firstname = $billing->getFirstName();
             $customer->lastname = $billing->getLastName();
             $customer->email = $billing->getEmail();
-        }else {
+        } else {
             $customer->firstname = 'null';
             $customer->lastname = 'null';
             $customer->email = 'ghost@email';
@@ -141,10 +144,12 @@ class PayEyeCartModuleFrontController extends FrontController
     /**
      * @throws PrestaShopException
      */
-    private function createAddress(CartRequestModel $request): Address
+    private function createDeliveryAddress(CartRequestModel $request): Address
     {
         $address = new Address($this->context->cart->id_address_delivery);
         $shipping = $request->getShipping();
+
+        $address->id_customer = $this->context->customer->id;
 
         if ($shipping) {
             $address->id_country = Country::getByIso($shipping->getAddress()->getCountry());
@@ -154,14 +159,58 @@ class PayEyeCartModuleFrontController extends FrontController
             $address->address1 = $shipping->getAddress()->getFirstLine();
             $address->city = $shipping->getAddress()->getCity();
             $address->postcode = $shipping->getAddress()->getPostCode();
+
+            if ($request->getBilling()) {
+                $address->phone = $request->getBilling()->getPhoneNumber();
+            }
+
+            if ($shipping->getPickupPoint()) {
+//                $address->address1 = $shipping->getPickupPoint()->getName();
+//                $address->address2 = $shipping->getAddress()->getFirstLine();
+            }
         } else {
             $address->id_country = 0;
-            $address->alias = 'null';
-            $address->firstname = 'null';
-            $address->lastname = 'null';
-            $address->address1 = 'null';
-            $address->city = 'null';
-            $address->postcode = 'null';
+            $address->alias = ' ';
+            $address->firstname = ' ';
+            $address->lastname = ' ';
+            $address->address1 = ' ';
+            $address->city = ' ';
+            $address->postcode = ' ';
+        }
+
+        $address->save();
+
+        return $address;
+    }
+
+    /**
+     * @throws PrestaShopException
+     */
+    private function createInvoiceAddress(CartRequestModel $request): Address
+    {
+        $address = new Address($this->context->cart->id_address_delivery === $this->context->cart->id_address_invoice ? null : $this->context->cart->id_address_invoice);
+        $billing = $request->getBilling();
+
+        $address->id_customer = $this->context->customer->id;
+
+        if ($billing) {
+            $address->id_country = Country::getByIso($billing->getAddress()->getCountry());
+            $address->alias = ' ';
+            // $address->dni = ' ';
+            // $address->vat_number = ' ';
+            $address->firstname = $billing->getFirstName();
+            $address->lastname = $billing->getLastName();
+            $address->address1 = $billing->getAddress()->getFirstLine();
+            $address->city = $billing->getAddress()->getCity();
+            $address->postcode = $billing->getAddress()->getPostCode();
+        } else {
+            $address->id_country = 0;
+            $address->alias = ' ';
+            $address->firstname = ' ';
+            $address->lastname = ' ';
+            $address->address1 = ' ';
+            $address->city = ' ';
+            $address->postcode = ' ';
         }
 
         $address->save();
@@ -196,16 +245,5 @@ class PayEyeCartModuleFrontController extends FrontController
         }
 
         return $cartRequestModel->getShippingId();
-    }
-
-    /**
-     * @throws PrestaShopDatabaseException
-     * @throws PrestaShopException
-     */
-    private function setCartOpen(PayEyeCartMappingEntity $entity): void
-    {
-        $cartMapping = new PayEyeCartMapping();
-        $cartMapping->setEntity($entity->setOpen(true));
-        $cartMapping->update();
     }
 }

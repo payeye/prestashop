@@ -18,7 +18,7 @@ class OrderStateService
      * @throws \PrestaShopDatabaseException
      * @throws \PrestaShopException
      */
-    public function addOrderState(string $state, array $names): int
+    public function addOrderState(string $state, array $names, bool $paid = false): int
     {
         $stateId = (int) \Configuration::getGlobalValue($state);
 
@@ -26,14 +26,14 @@ class OrderStateService
             return $stateId;
         }
 
-        return $this->createOrderState($names);
+        return $this->createOrderState($names, $paid);
     }
 
     /**
      * @throws \PrestaShopException
      * @throws \PrestaShopDatabaseException
      */
-    private function createOrderState(array $names): int
+    private function createOrderState(array $names, bool $paid): int
     {
         $order_state = new \OrderState();
 
@@ -47,6 +47,7 @@ class OrderStateService
         $order_state->color = '#34209E';
         $order_state->template = 'payment';
         $order_state->module_name = $this->module->name;
+        $order_state->paid = $paid;
 
         $order_state->add();
 

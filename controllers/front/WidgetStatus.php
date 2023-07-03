@@ -9,7 +9,6 @@ if (!defined('_PS_VERSION_')) {
 use PayEye\Lib\Enum\OrderStatus;
 use PayEye\Lib\Widget\WidgetStatusModel;
 use PrestaShop\Module\PayEye\Controller\FrontController;
-use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
 
 class PayEyeWidgetStatusModuleFrontController extends FrontController
 {
@@ -26,7 +25,7 @@ class PayEyeWidgetStatusModuleFrontController extends FrontController
 
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'GET':
-                $this->exitWithResponse($this->widgetStatus($cart)->toArray());
+                $this->exitWithResponse($this->widgetStatus($cart));
                 break;
             case 'PUT':
                 $this->resetWidget($cart);
@@ -34,7 +33,7 @@ class PayEyeWidgetStatusModuleFrontController extends FrontController
         }
     }
 
-    private function widgetStatus(PayEyeCartMappingEntity $entity): WidgetStatusModel
+    private function widgetStatus(PayEyeCartMapping $entity): array
     {
         $response = WidgetStatusModel::builder();
 
@@ -45,7 +44,7 @@ class PayEyeWidgetStatusModuleFrontController extends FrontController
         $order = Order::getByCartId($entity->id_cart);
 
         if ($order === null) {
-            return $response;
+            return $response->toArray();
         }
 
         $response->setStatus('ORDER_CREATED');
@@ -59,13 +58,20 @@ class PayEyeWidgetStatusModuleFrontController extends FrontController
                 break;
         }
 
-        return $response;
+        // @TODO extend model with checkoutUrl
+        // @TODO use model in WooCommerce
+
+        $customer = new Customer($order->id_customer);
+
+        $data = $response->toArray();
+        $data['checkoutUrl'] = $this->context->link->getPageLink('guest-tracking') . "?controller=guest-tracking&order_reference=$order->reference&email=$customer->email";
+
+        return $data;
     }
 
-    private function resetWidget(PayEyeCartMappingEntity $entity): void
+    private function resetWidget(PayEyeCartMapping $entity): void
     {
-        $cartMapping = new PayEyeCartMapping();
-        $cartMapping->setEntity($entity->setOpen(false));
-        $cartMapping->update();
+        $entity->open = false;
+        $entity->update();
     }
 }

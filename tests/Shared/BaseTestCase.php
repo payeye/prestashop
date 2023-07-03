@@ -4,8 +4,8 @@ namespace PayEye\Tests\Shared;
 
 use PayEye\Lib\Enum\ShippingProvider;
 use PayEye\Lib\PromoCode\PromoCodeRequestModel;
+use PayEye\Lib\Returns\ReturnCreateRequestModel;
 use PayEye\Lib\Test\TestCaseTrait;
-use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class BaseTestCase extends WebTestCase
@@ -24,7 +24,7 @@ class BaseTestCase extends WebTestCase
     /** @var string */
     protected $cartId;
 
-    /** @var PayEyeCartMappingEntity */
+    /** @var \PayEyeCartMapping */
     protected $cartMapping;
 
     public function setUp(): void
@@ -37,11 +37,11 @@ class BaseTestCase extends WebTestCase
 
         $this->mock = [
             'cartId' => $this->cartId,
-            'shippingProvider' => ShippingProvider::COURIER,
+            'shippingProvider' => ShippingProvider::INPOST,
             'billing' => [
                 'firstName' => 'Jan',
                 'lastName' => 'Kowalski',
-                'phoneNumber' => '500 400 300',
+                'phoneNumber' => '+48 500 400 300',
                 'email' => 'bartosz.bury@payeye.com',
                 'address' => [
                     'street' => 'aleja Kowalska',
@@ -91,12 +91,17 @@ class BaseTestCase extends WebTestCase
         $this->post($this->baseUrl . '/orders', array_merge($this->addSignature($this->module->authConfig), $payload));
     }
 
+    public function createReturn(ReturnCreateRequestModel $requestModel): void
+    {
+        $this->post($this->baseUrl . '/returns', array_merge($this->addSignature($this->module->authConfig), $requestModel->toArray()));
+    }
+
     public function updateOrderStatus(array $payload): void
     {
         $this->put($this->baseUrl . '/orders/status', array_merge($this->addSignature($this->module->authConfig), $payload));
     }
 
-    public function createMockCart(): PayEyeCartMappingEntity
+    public function createMockCart()
     {
         $cookie = new \Cookie('test');
         \Guest::setNewGuest($cookie);

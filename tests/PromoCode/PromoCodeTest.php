@@ -13,6 +13,9 @@ class PromoCodeTest extends BaseTestCase
 
     public function testApplyPromoCode(): void
     {
+        $cartRuleId = \CartRule::getIdByCode(self::PROMO_CODE);
+        $beforeQuantity = (new \CartRule($cartRuleId))->quantity;
+
         $this->getCart($this->mock);
 
         $this->applyPromoCode(
@@ -27,6 +30,21 @@ class PromoCodeTest extends BaseTestCase
         $cart = CartResponseModel::createFromArray($this->response->getArrayResponse());
 
         $this->assertTrue(count($cart->promoCodes) >= 1, 'PromoCodes is empty');
+
+        $mock = $this->mock;
+        $mock['shippingId'] = $cart->shippingId;
+        $mock['cartHash'] = $cart->cartHash;
+        $this->createOrder($mock);
+
+        $query = new \DbQuery();
+        $query
+            ->select('quantity')
+            ->from('cart_rule')
+            ->where('id_cart_rule =' . (int) $cartRuleId);
+
+        $quantity = \Db::getInstance()->getValue($query);
+
+        $this->assertNotSame($beforeQuantity, $quantity);
     }
 
     public function testDeletePromoCode(): void

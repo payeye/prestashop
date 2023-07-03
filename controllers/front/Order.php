@@ -6,9 +6,10 @@ use PayEye\Lib\Cart\CartResponseModel;
 use PayEye\Lib\Exception\CartContentNotMatchedException;
 use PayEye\Lib\Exception\CartNotFoundException;
 use PayEye\Lib\Exception\OrderAlreadyExistsException;
+use PayEye\Lib\Exception\OrderPriceNotMatchedException;
 use PayEye\Lib\Exception\PayEyePaymentException;
-use PayEye\Lib\Order\OrderRequestModel;
-use PayEye\Lib\Order\OrderResponseModel;
+use PayEye\Lib\Order\OrderCreateRequestModel;
+use PayEye\Lib\Order\OrderCreateResponseModel;
 use PayEye\Lib\Service\AmountService;
 use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
@@ -35,7 +36,7 @@ class PayEyeOrderModuleFrontController extends FrontController
             $handleRequest = $this->getRequest();
             $this->checkPermission($handleRequest);
 
-            $request = new OrderRequestModel($handleRequest);
+            $request = new OrderCreateRequestModel($handleRequest);
 
             $cartMapping = PayEyeCartMapping::findByCartUuid($request->getCartId());
             if ($cartMapping === null) {
@@ -47,11 +48,30 @@ class PayEyeOrderModuleFrontController extends FrontController
             $this->context->customer = new Customer($cart->id_customer);
             $this->context->cart = $cart;
 
-            if ($request->getCartHash() !== $this->calculateCartHash($this->currentCart($amountService))) {
+            $cartService = $this->currentCart($amountService);
+            if ($request->getCartHash() !== $this->calculateCartHash($cartService)) {
                 throw new CartContentNotMatchedException();
             }
 
-            $this->exitWithResponse($this->createOrder($amountService, $request)->toArray());
+            $address = new Address($this->context->cart->id_address_delivery);
+            if ($address->id && $request->getShipping()->getPickupPoint()) {
+                $address->address1 = $request->getShipping()->getPickupPoint()->getName();
+                $address->address2 = $request->getShipping()->getAddress()->getFirstLine();
+                $address->save();
+            }
+
+            \Hook::exec('actionPayEyeApiBeforeCreateOrder', [
+                'shippingProvider' => $request->getShippingProvider(),
+                'pickupPointName' => $this->getPickupPointName($request),
+            ]);
+
+            $order = $this->createOrder($amountService, $request);
+
+            if ($cartService->cart->total !== $order->totalAmount) {
+                throw new OrderPriceNotMatchedException();
+            }
+
+            $this->exitWithResponse($order->toArray());
         } catch (PayEyePaymentException $exception) {
             $this->exitWithPayEyeExceptionResponse($exception);
         } catch (Exception|Throwable $exception) {
@@ -64,7 +84,7 @@ class PayEyeOrderModuleFrontController extends FrontController
      * @throws PrestaShopDatabaseException
      * @throws Exception
      */
-    private function createOrder(AmountService $amountService,OrderRequestModel $requestModel): OrderResponseModel
+    private function createOrder(AmountService $amountService, OrderCreateRequestModel $requestModel): OrderCreateResponseModel
     {
         $currency = $this->context->currency;
         $total = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
@@ -92,15 +112,10 @@ class PayEyeOrderModuleFrontController extends FrontController
 
         $order = $this->order;
 
-        if ($requestModel->getShipping()->getPickupPoint()) {
-            $order->note = $requestModel->getShipping()->getPickupPoint()->getName() .', ' . $requestModel->getShipping()->getAddress()->getFullAddress();
-            $order->save();
-        }
-
-        return OrderResponseModel::builder()
+        return OrderCreateResponseModel::builder()
             ->setCheckoutUrl($this->checkoutUrl())
             ->setOrderId((string) $order->id)
-            ->setTotalAmount($amountService->convertFloatToInteger($order->total_paid))
+            ->setTotalAmount($amountService->convertFloatToInteger($order->getOrdersTotalPaid()))
             ->setCartAmount($amountService->convertFloatToInteger($order->total_products_wt))
             ->setShippingAmount($amountService->convertFloatToInteger($order->total_shipping))
             ->setCurrency(Currency::getIsoCodeById((int) $order->id_currency));
@@ -141,5 +156,18 @@ class PayEyeOrderModuleFrontController extends FrontController
     private function calculateCartHash(CartResponseModel $cart): string
     {
         return (new CartHashService($this->module->authConfig))->calculateCartHash($cart);
+    }
+
+    private function getPickupPointName(OrderCreateRequestModel $request): ?string
+    {
+        $shipping = $request->getShipping();
+
+        $pickupPoint = $shipping->getPickupPoint();
+
+        if ($pickupPoint === null) {
+            return null;
+        }
+
+        return $pickupPoint->getName();
     }
 }

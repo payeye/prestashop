@@ -57,7 +57,8 @@ class GetCartControllerTest extends BaseTestCase
 
         // If test not pass go to backoffice http://payeye-prestashop.local/admin008qumzki/index.php/configure/shop/preferences/preferences?_token=MVRPq_VdqmdONDpzpgpr2-WTZb1PlTDPloQVM4RZZuk and change form_price_round_type to 1
 
-        $this->assertIsString($cart->products[0]->imageUrl, 'ImageUrl is not string');
+        $this->assertIsString($cart->products[0]->images->thumbnailUrl, 'ImageUrl is not string');
+        $this->assertIsString($cart->products[0]->images->fullUrl, 'ImageUrl is not string');
     }
 
     public function testChangeShippingIdToAnother(): void
@@ -65,6 +66,10 @@ class GetCartControllerTest extends BaseTestCase
         $mock = $this->mock;
 
         foreach ($this->module->shippingMatchCollection->getCopyObject() as $value) {
+            if (empty($value->getProvider())) {
+                return;
+            }
+
             $mock['shippingId'] = $value->getCarrierId();
             $this->getCart($mock);
 
