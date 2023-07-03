@@ -6,7 +6,7 @@ use PayEye\Lib\Cart\CartResponseModel;
 use PayEye\Lib\Enum\PickupPointType;
 use PayEye\Lib\Model\Location;
 use PayEye\Lib\Model\PickupPoint;
-use PayEye\Lib\Order\OrderResponseModel;
+use PayEye\Lib\Order\OrderCreateResponseModel;
 use PayEye\Tests\Shared\BaseTestCase;
 
 class CreateOrderTest extends BaseTestCase
@@ -21,7 +21,7 @@ class CreateOrderTest extends BaseTestCase
         $mock['cartHash'] = $cart->cartHash;
         $this->createOrder($mock);
 
-        $response = OrderResponseModel::createFromArray($this->response->getArrayResponse());
+        $response = OrderCreateResponseModel::createFromArray($this->response->getArrayResponse());
         $order = new \Order((int) $response->orderId);
         $isoCurrency = 3;
 
@@ -39,19 +39,21 @@ class CreateOrderTest extends BaseTestCase
     public function testCreateOrderWithPaczkomat(): void
     {
         $pickupPoint = PickupPoint::builder()
-            ->setName('WRO160M,Zielińskiego 61,53-533 Wrocław')
+            ->setName('WRO160M')
             ->setLocation(Location::builder()->setLat(55.234234)->setLng(54.234234))
             ->setType(PickupPointType::PARCEL_LOCKER);
 
-        $this->getCart($this->mock);
+        $mock = $this->mock;
+        $mock['shipping']['pickupPoint'] = $pickupPoint->toArray();
+        $this->getCart($mock);
+
         $cart = CartResponseModel::createFromArray($this->response->getArrayResponse());
 
-        $mock = $this->mock;
         $mock['shippingId'] = $cart->shippingId;
         $mock['cartHash'] = $cart->cartHash;
         $mock['shipping']['pickupPoint'] = $pickupPoint->toArray();
         $this->createOrder($mock);
 
-        $response = OrderResponseModel::createFromArray($this->response->getArrayResponse());
+        OrderCreateResponseModel::createFromArray($this->response->getArrayResponse());
     }
 }

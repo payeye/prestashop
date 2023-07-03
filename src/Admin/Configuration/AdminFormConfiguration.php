@@ -2,6 +2,8 @@
 
 namespace PrestaShop\Module\PayEye\Admin\Configuration;
 
+use PayEye\Lib\Enum\ShippingProvider;
+
 class AdminFormConfiguration
 {
     /** @var \Module */
@@ -23,19 +25,19 @@ class AdminFormConfiguration
                 'input' => [
                     [
                         'type' => 'switch',
-                        'label' => $this->module->l('Admin Test'),
-                        'name' => ConfigurationField::ADMIN_TEST_MODE,
-                        'desc' => 'Show QR Code only for admin role. Enable mode before go live and check the PayEye flow.',
+                        'label' => $this->module->l('Test Mode'),
+                        'desc' => $this->module->l("Enable this mode before your store is approved by PayEye's technical department"),
+                        'name' => ConfigurationField::TEST_MODE,
                         'values' => [
                             [
                                 'id' => 'active_on',
                                 'value' => 1,
-                                'label' => $this->module->l('Yes'),
+                                'label' => $this->module->l('Enabled'),
                             ],
                             [
                                 'id' => 'active_off',
                                 'value' => 0,
-                                'label' => $this->module->l('No'),
+                                'label' => $this->module->l('Disabled'),
                             ],
                         ],
                     ],
@@ -76,6 +78,56 @@ class AdminFormConfiguration
                     'title' => $this->module->l('Save'),
                     'class' => 'btn btn-default pull-right',
                 ],
+            ],
+        ];
+    }
+
+    public function widgetFormType(): array
+    {
+        return [
+            'form' => [
+                'legend' => [
+                    'title' => $this->module->l('Widget UI'),
+                    'icon' => 'icon-th',
+                ],
+                'input' => [
+                    [
+                        'type' => 'text',
+                        'label' => $this->module->l('Widget bottom position'),
+                        'desc' => $this->module->l('Distance from the bottom screen (unit px). Default 20.'),
+                        'name' => ConfigurationField::WIDGET_UI_BOTTOM,
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->module->l('Save'),
+                    'class' => 'btn btn-default pull-right',
+                ],
+            ],
+        ];
+    }
+
+    public function getAvailableShippingQuery(): array
+    {
+        return [
+            [
+                'id' => false,
+                'name' => 'Select matching',
+            ],
+            [
+                'id' => ShippingProvider::COURIER,
+                'name' => $this->module->l('Courier'),
+            ],
+            [
+                'id' => ShippingProvider::SELF_PICKUP,
+                'name' => $this->module->l('Self pickup'),
+            ],
+            [
+                'id' => ShippingProvider::INPOST,
+                'name' => $this->module->l('Inpost'),
+            ],
+            [
+                'id' => ShippingProvider::DHL,
+                'name' => $this->module->l('Pickup Point DHL'),
             ],
         ];
     }

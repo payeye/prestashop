@@ -5,6 +5,8 @@ namespace PrestaShop\Module\PayEye\Cart\Services;
 use PayEye\Lib\Enum\PromoCodeType;
 use PayEye\Lib\Model\Cart as PayEyeCart;
 use PayEye\Lib\Model\Product;
+use PayEye\Lib\Model\ProductAttribute;
+use PayEye\Lib\Model\ProductImages;
 use PayEye\Lib\Model\PromoCode;
 use PayEye\Lib\Service\AmountService;
 
@@ -78,35 +80,48 @@ class CartResponseService
         $products = [];
 
         foreach ($cartProducts as $product) {
+            $id = $product['id_product'];
+            $variantId = $product['id_product_attribute'];
             $quantity = (int) $product['cart_quantity'];
-            $imageUrl = $this->getImageUrl($product);
+            $fullUrl = $this->getImageUrl($product);
+            $thumbnailUrl = $this->getImageUrl($product, \ImageType::getFormattedName('cart'));
             $price = $this->amountService->convertFloatToInteger($product['price_with_reduction']);
             $regularPrice = $this->amountService->convertFloatToInteger($product['price_without_reduction']);
-            $this->productsTotal += $price * $quantity;
+            $total = $this->amountService->convertFloatToInteger($product['total_wt']);
             $this->regularProductsTotal += $regularPrice * $quantity;
 
+            $attributes = $this->getAttributes((int) $product['id_product_attribute']);
+
+            $images = ProductImages::builder()
+                ->setFullUrl($fullUrl ?: null)
+                ->setThumbnailUrl($thumbnailUrl ?: null);
+
             $products[] = Product::builder()
-                ->setId($product['id_product'])
+                ->setId($id)
+                ->setVariantId($variantId)
                 ->setPrice($price)
                 ->setRegularPrice($regularPrice)
+                ->setTotalPrice($total)
                 ->setName($product['name'])
                 ->setQuantity($quantity)
-                ->setImageUrl($imageUrl);
+                ->setImages($images)
+                ->setAttributes($attributes);
         }
+
+        $this->productsTotal = $this->amountService->convertFloatToInteger($this->cart->getSummaryDetails()['total_products_wt']);
 
         return $products;
     }
 
-    private function getImageUrl(array $product): string
+    private function getImageUrl(array $product, string $type = null): string
     {
         $prestaProduct = new \Product($product['id_product']);
-        $image = \Image::getCover($prestaProduct->id);
         $name = $prestaProduct->link_rewrite;
         if (is_array($name)) {
             $name = $name[$this->cart->id_lang];
         }
 
-        return \Context::getContext()->link->getImageLink($name, $image['id_image']);
+        return \Context::getContext()->link->getImageLink($name, $product['id_image'], $type);
     }
 
     private function getPromoCodes(): array
@@ -127,5 +142,26 @@ class CartResponseService
                 ->setFreeDelivery((bool) $context['free_shipping'])
                 ->setPayeyeCode(false);
         }, $rules);
+    }
+
+    private function getAttributes(int $productAttribute): array
+    {
+        $combination = new \Combination($productAttribute);
+        $attributesName = $combination->getAttributesName($this->cart->id_lang);
+
+        $attributes = [];
+
+        foreach ($attributesName as $value) {
+            $id = $value['id_attribute'];
+            $attribute = new \Attribute($id, $this->cart->id_lang);
+            $group = new \AttributeGroup($attribute->id_attribute_group, $this->cart->id_lang);
+
+            $attributes[] = ProductAttribute::builder()
+                ->setId($id)
+                ->setValue($attribute->name)
+                ->setName($group->name);
+        }
+
+        return $attributes;
     }
 }

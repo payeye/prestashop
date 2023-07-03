@@ -10,7 +10,7 @@ class HandleConfiguration
     {
         $matching = [];
         foreach ($payload as $key => $value) {
-            if (str_contains($key, ConfigurationField::SHIPPING_MATCHING)) {
+            if (strpos($key, ConfigurationField::SHIPPING_MATCHING) !== false) {
                 $matching[] = [
                     'carrierId' => str_replace(ConfigurationField::SHIPPING_MATCHING, '', $key),
                     'provider' => $value,

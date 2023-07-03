@@ -4,7 +4,7 @@ namespace PayEye\Tests\Order;
 
 use PayEye\Lib\Cart\CartResponseModel;
 use PayEye\Lib\Enum\OrderStatus;
-use PayEye\Lib\Order\OrderResponseModel;
+use PayEye\Lib\Order\OrderCreateResponseModel;
 use PayEye\Lib\Order\OrderUpdateStatusRequestModel;
 use PayEye\Tests\Shared\BaseTestCase;
 
@@ -31,7 +31,7 @@ class UpdateOrderStatusTest extends BaseTestCase
         $mock['cartHash'] = $cart->cartHash;
         $this->createOrder($mock);
 
-        $response = OrderResponseModel::createFromArray($this->response->getArrayResponse());
+        $response = OrderCreateResponseModel::createFromArray($this->response->getArrayResponse());
 
         $request = OrderUpdateStatusRequestModel::builder()
             ->setOrderId($response->orderId)
