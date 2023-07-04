@@ -47,7 +47,7 @@ class PayEye extends PaymentModule
     {
         $this->name = 'payeye';
         $this->tab = 'payments_gateways';
-        $this->version = '0.0.27';
+        $this->version = '0.0.29';
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
         $this->controllers = ['Cart', 'Order', 'OrderUpdate', 'Widget', 'Return'];
@@ -76,7 +76,8 @@ class PayEye extends PaymentModule
             (int) Configuration::get(ConfigurationField::RETURN_REQUEST)
         );
         $this->widgetUI = new WidgetUI(
-            (int) Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM)
+            (int) Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM),
+            (bool) Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN)
         );
         $this->testMode = (bool) Configuration::get(ConfigurationField::TEST_MODE);
     }
@@ -109,11 +110,11 @@ class PayEye extends PaymentModule
         $actions = explode(',', $actions);
 
         if (in_array('clearCart', $actions, true)) {
-//            Context::getContext()->cart->delete();
-//            $url = $_SERVER['REQUEST_URI'];
-//            $url = str_replace(['clearCart', 'clearCart,'], '', $url);
-//
-//            Tools::redirect($url);
+            //            Context::getContext()->cart->delete();
+            //            $url = $_SERVER['REQUEST_URI'];
+            //            $url = str_replace(['clearCart', 'clearCart,'], '', $url);
+            //
+            //            Tools::redirect($url);
         }
 
         $this->context->controller->registerJavascript(
@@ -142,6 +143,9 @@ class PayEye extends PaymentModule
                     'position' => [
                         'bottom' => $this->widgetUI->getBottom() . 'px',
                     ],
+                    'mobile' => [
+                        'open' => $this->widgetUI->getMobileOpen(),
+                    ],
                 ],
             ],
         ]);
@@ -162,9 +166,16 @@ class PayEye extends PaymentModule
         $orderStateService = new OrderStateService($this);
 
         return
-            Configuration::updateValue(ConfigurationField::PAYMENT_STATUS_WAITING, $orderStateService->addOrderState(ConfigurationField::PAYMENT_STATUS_WAITING, OrderStatesTranslations::PAYMENT_STATUS_WAITING))
-            && Configuration::updateValue(ConfigurationField::RETURN_REQUEST, $orderStateService->addOrderState(ConfigurationField::RETURN_REQUEST, OrderStatesTranslations::RETURN_REQUEST, true))
+            Configuration::updateValue(
+                ConfigurationField::PAYMENT_STATUS_WAITING,
+                $orderStateService->addOrderState(ConfigurationField::PAYMENT_STATUS_WAITING, OrderStatesTranslations::PAYMENT_STATUS_WAITING)
+            )
+            && Configuration::updateValue(
+                ConfigurationField::RETURN_REQUEST,
+                $orderStateService->addOrderState(ConfigurationField::RETURN_REQUEST, OrderStatesTranslations::RETURN_REQUEST, true)
+            )
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_BOTTOM, 20)
+            && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, 0)
             && Configuration::updateValue(ConfigurationField::TEST_MODE, 1);
     }
 
@@ -178,6 +189,7 @@ class PayEye extends PaymentModule
             $publicKey = (string) Tools::getValue(ConfigurationField::PUBLIC_KEY);
             $privateKey = (string) Tools::getValue(ConfigurationField::PRIVATE_KEY);
             $widgetUiBottom = (int) Tools::getValue(ConfigurationField::WIDGET_UI_BOTTOM);
+            $widgetUiMobileOpen = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN);
 
             if ($widgetUiBottom === 0 || $widgetUiBottom < 0) {
                 $widgetUiBottom = 20;
@@ -189,6 +201,7 @@ class PayEye extends PaymentModule
                 && Configuration::updateValue(ConfigurationField::PUBLIC_KEY, $publicKey)
                 && Configuration::updateValue(ConfigurationField::PRIVATE_KEY, $privateKey)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_BOTTOM, $widgetUiBottom)
+                && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, $widgetUiMobileOpen)
                 && Configuration::updateValue(ConfigurationField::SHIPPING_MATCHING, HandleConfiguration::handleMatching(Tools::getAllValues()))
             ) {
                 $output = $this->displayConfirmation($this->l('Settings updated'));
@@ -250,6 +263,7 @@ class PayEye extends PaymentModule
             $this->getConfigFieldsValuesForCarrierMatching($matchShipping),
             [
                 ConfigurationField::WIDGET_UI_BOTTOM => Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM),
+                ConfigurationField::WIDGET_UI_MOBILE_OPEN => Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN),
             ]
         );
     }

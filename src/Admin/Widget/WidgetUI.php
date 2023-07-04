@@ -9,13 +9,22 @@ class WidgetUI
     /** @var int */
     private $bottom;
 
-    public function __construct(int $bottom)
+    /** @var bool */
+    private $mobileOpen;
+
+    public function __construct(int $bottom, bool $mobileOpen)
     {
         $this->bottom = $bottom;
+        $this->mobileOpen = $mobileOpen;
     }
 
     public function getBottom(): int
     {
         return $this->bottom;
+    }
+
+    public function getMobileOpen(): bool
+    {
+        return $this->mobileOpen;
     }
 }

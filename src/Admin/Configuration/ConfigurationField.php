@@ -13,6 +13,7 @@ abstract class ConfigurationField
     public const PUBLIC_KEY = 'PAYEYE_PUBLIC_KEY';
     public const PRIVATE_KEY = 'PAYEYE_PRIVATE_KEY';
     public const WIDGET_UI_BOTTOM = 'PAYEYE_WIDGET_UI_BOTTOM';
+    public const WIDGET_UI_MOBILE_OPEN = 'PAYEYE_WIDGET_UI_MOBILE_OPEN';
     public const SHIPPING_MATCHING = 'PAYEYE_SHIPPING_MATCHING';
 
     public const PAYMENT_STATUS_WAITING = 'PAYEYE_PAYMENT_STATUS_WAITING';
@@ -30,6 +31,7 @@ abstract class ConfigurationField
             self::PRIVATE_KEY,
             self::SHIPPING_MATCHING,
             self::WIDGET_UI_BOTTOM,
+            self::WIDGET_UI_MOBILE_OPEN,
         ];
     }
 }
