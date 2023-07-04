@@ -92,6 +92,24 @@ class AdminFormConfiguration
                 ],
                 'input' => [
                     [
+                        'type' => 'switch',
+                        'label' => $this->module->l('Mobile launcher first'),
+                        'desc' => $this->module->l('Enable launcher first'),
+                        'name' => ConfigurationField::WIDGET_UI_MOBILE_OPEN,
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->module->l('Enabled'),
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->module->l('Disabled'),
+                            ],
+                        ],
+                    ],
+                    [
                         'type' => 'text',
                         'label' => $this->module->l('Widget bottom position'),
                         'desc' => $this->module->l('Distance from the bottom screen (unit px). Default 20.'),

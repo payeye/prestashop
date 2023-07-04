@@ -163,11 +163,6 @@ class PayEyeCartModuleFrontController extends FrontController
             if ($request->getBilling()) {
                 $address->phone = $request->getBilling()->getPhoneNumber();
             }
-
-            if ($shipping->getPickupPoint()) {
-//                $address->address1 = $shipping->getPickupPoint()->getName();
-//                $address->address2 = $shipping->getAddress()->getFirstLine();
-            }
         } else {
             $address->id_country = 0;
             $address->alias = ' ';
