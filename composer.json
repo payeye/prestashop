@@ -29,11 +29,12 @@
   "type": "prestashop-module",
   "author": "PayEye",
   "require-dev": {
+    "ext-curl": "*",
     "phpstan/phpstan": "^1.9",
     "phpunit/phpunit": "^9.6.3",
+    "prestashop/autoindex": "^2.1",
     "prestashop/php-dev-tools": "^4.3",
-    "symfony/var-dumper": "^5.4",
-    "ext-curl": "*"
+    "symfony/var-dumper": "^5.4"
   },
   "repositories": [
     {
@@ -44,6 +45,43 @@
   "require": {
     "ext-json": "*",
     "chillerlan/php-qrcode": "^3.4.1",
-    "payeye/lib": "1.12.0"
+    "payeye/lib": "1.18.12",
+    "ext-http": "*"
+  },
+  "archive": {
+    "exclude": [
+      "build-local.sh",
+      ".php-cs-fixer.cache",
+      ".php-cs-fixer.dist.php",
+      ".DS_Store",
+      ".idea",
+      "config",
+      "node_modules",
+      "scripts",
+      "scss",
+      "tests",
+      ".env",
+      ".env.smaple",
+      ".gitignore",
+      ".phpunit.result.cache",
+      "config.json",
+      "composer.json",
+      "composer.lock",
+      "movefile.yml",
+      "package.json",
+      "phpunit.xml",
+      "README.md",
+      "webpack.config.js",
+      "yarn.lock",
+      "devops",
+      ".gitlab-ci.yml",
+      "auth.json",
+      "auth.json.dist",
+      "tsconfig.json",
+      "dist/*.map",
+      "languages/*.po~",
+      "languages/*.pot~",
+      "languages/.gitkeep"
+    ]
   }
 }

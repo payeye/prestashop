@@ -1,0 +1,133 @@
+stages:
+  - test
+  - build
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+
+default:
+  tags: [ docker-front-1 ]
+
+variables:
+  MODULE_NAME: payeye
+  PRESTASHOP_DIR: /bitnami/prestashop
+  REGION: eu-central-1
+  DOCKER_TLS_CERTDIR: ''
+  DOCKER_DRIVER: overlay2
+  REPO_URL_PREFIX: 306124787333.dkr.ecr.${REGION}.amazonaws.com/payeye
+  BUILDER_IMAGE_REPO: frontend-ecommerce-plugin-builder
+  BUILDER_IMAGE_TAG: "0.1"
+  BUILDER_IMAGE: "${REPO_URL_PREFIX}/${BUILDER_IMAGE_REPO}:${BUILDER_IMAGE_TAG}"
+
+
+cache: &global_cache
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules
+  policy: pull
+
+
+### TEST ###
+test:php-7.4:
+  image: ${BUILDER_IMAGE}
+  stage: test
+  script:
+  - find . -type f -name '*.php' ! -path "./vendor/*" ! -path "./tests/*" -exec php -l -n {} \; | (! grep -v "No syntax errors detected")
+
+### BUILD ###
+build:
+  stage: build
+  variables:
+    ENV: dev3b
+  image: ${BUILDER_IMAGE}
+  script:
+    - composer config gitlab-token.gitlab.com ${DEPLOY_TOKEN_PHP_LIBRARY%:*} ${DEPLOY_TOKEN_PHP_LIBRARY##*:}
+    - composer install --no-dev --optimize-autoloader
+    - composer archive --format=zip --dir . --file ${MODULE_NAME}
+  cache:
+    <<: *global_cache
+    policy: pull-push
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ${MODULE_NAME}.zip
+
+.deploy-base:
+  stage: deploy
+  variables:
+    REGION: eu-central-1
+    ECR_REGION: eu-central-1
+    EKS_CLUSTER: ${ENV}-eks
+    NAMESPACE: woocommerce-testshop
+  image: kubectl-awscli
+  resource_group: deploy-$ENV
+  dependencies:
+    - build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_COMMIT_TITLE =~ /^Merge branch/ && $CI_PIPELINE_SOURCE == "push"
+      when: manual
+    - if: $CI_COMMIT_REF_SLUG =~ /^(develop|master|release.*|hotfix.*|gl).*$/i
+      when: manual
+      allow_failure: true
+    - when: manual
+      allow_failure: true
+  before_script:
+    - aws eks update-kubeconfig --region ${REGION} --name ${EKS_CLUSTER}
+    - kubectl config set-context --current --namespace=${NAMESPACE}
+    - apk add unzip
+  script:
+    - export POD_NAME=$(kubectl get po -l app.kubernetes.io/instance=prestashop-${ENV} --no-headers -o custom-columns=":metadata.name")
+    - mkdir dist && unzip -qo ${MODULE_NAME}.zip -d dist/${MODULE_NAME}
+    - tar cf - -C dist ${MODULE_NAME} | kubectl exec -i ${POD_NAME} -- tar --recursive-unlink -C /tmp -xf -
+    - kubectl cp config/${ENV}.json ${NAMESPACE}/${POD_NAME}:/tmp/config.json
+
+    - kubectl exec -i ${POD_NAME} -- rm -rf ${PRESTASHOP_DIR}/modules/${MODULE_NAME}
+    - kubectl exec -i ${POD_NAME} -- mv /tmp/${MODULE_NAME} ${PRESTASHOP_DIR}/modules/${MODULE_NAME}
+    - kubectl exec -i ${POD_NAME} -- mv /tmp/config.json ${PRESTASHOP_DIR}/modules/${MODULE_NAME}
+    - kubectl exec -i ${POD_NAME} -- php ${PRESTASHOP_DIR}/bin/console prestashop:module install ${MODULE_NAME}
+    - kubectl exec -i ${POD_NAME} -- php ${PRESTASHOP_DIR}/bin/console cache:cl
+
+
+dev3a-k8s:
+  extends: .deploy-base
+  variables:
+    ENV: dev3a
+    EKS_CLUSTER: ds-eks
+
+dev3b-k8s:
+  extends: .deploy-base
+  variables:
+    ENV: dev3b
+    EKS_CLUSTER: ds-eks
+
+dev3c-k8s:
+  extends: .deploy-base
+  variables:
+    ENV: dev3c
+    EKS_CLUSTER: ds-eks
+
+sit3a-k8s:
+  extends: .deploy-base
+  variables:
+    ENV: sit3a
+    EKS_CLUSTER: ds-eks
+
+sit3b-k8s:
+  extends: .deploy-base
+  variables:
+    ENV: sit3b
+    EKS_CLUSTER: ds-eks
+
+uat3a-k8s:
+  extends: .deploy-base
+  variables:
+    ENV: uat3a
+    EKS_CLUSTER: uat-eks
+
+uat3b-k8s:
+  extends: .deploy-base
+  variables:
+    ENV: uat3b
+    EKS_CLUSTER: uat-eks

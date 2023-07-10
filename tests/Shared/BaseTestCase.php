@@ -2,12 +2,10 @@
 
 namespace PayEye\Tests\Shared;
 
-use Cart;
-use Context;
-use PayEye\Lib\Enum\ShippingType;
+use PayEye\Lib\Enum\ShippingProvider;
+use PayEye\Lib\PromoCode\PromoCodeRequestModel;
+use PayEye\Lib\Returns\ReturnCreateRequestModel;
 use PayEye\Lib\Test\TestCaseTrait;
-use PayEyeCartMapping;
-use PrestaShop\Module\PayEye\Entity\PayEyeCartMappingEntity;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class BaseTestCase extends WebTestCase
@@ -26,60 +24,91 @@ class BaseTestCase extends WebTestCase
     /** @var string */
     protected $cartId;
 
+    /** @var \PayEyeCartMapping */
+    protected $cartMapping;
+
     public function setUp(): void
     {
         parent::setUp();
 
         $this->module = \Module::getInstanceByName('payeye');
-        $this->cartId = $this->createCart()->uuid;
+        $this->cartMapping = $this->createMockCart();
+        $this->cartId = $this->cartMapping->uuid;
 
         $this->mock = [
             'cartId' => $this->cartId,
-            "deliveryType" => ShippingType::COURIER,
-            "billing" => [
-                "firstName" => "Jan",
-                "lastName" => "Kowalski",
-                "phoneNumber" => "500 400 300",
-                "email" => "bartosz.bury@payeye.com",
-                "address" => [
-                    "street" => "aleja Kowalska",
-                    "homeNumber" => "82C",
-                    "flatNumber" => "77",
-                    "postCode" => "53-126",
-                    "city" => "Wrocław",
-                    "country" => "PL",
+            'shippingProvider' => ShippingProvider::INPOST,
+            'billing' => [
+                'firstName' => 'Jan',
+                'lastName' => 'Kowalski',
+                'phoneNumber' => '+48 500 400 300',
+                'email' => 'bartosz.bury@payeye.com',
+                'address' => [
+                    'street' => 'aleja Kowalska',
+                    'buildingNumber' => '82C',
+                    'flatNumber' => '77',
+                    'postCode' => '53-126',
+                    'city' => 'Wrocław',
+                    'country' => 'PL',
                 ],
             ],
-            "shipping" => [
-                "firstName" => "Janina",
-                "lastName" => "Kowalska",
-                "address" => [
-                    "street" => "aleja Ogryskowa",
-                    "homeNumber" => "12B",
-                    "flatNumber" => "1",
-                    "postCode" => "53-126",
-                    "city" => "Wrocław",
-                    "country" => "PL",
+            'shipping' => [
+                'firstName' => 'Janina',
+                'lastName' => 'Kowalska',
+                'label' => 'Dom',
+                'address' => [
+                    'street' => 'aleja Ogryskowa',
+                    'buildingNumber' => '12B',
+                    'flatNumber' => '1',
+                    'postCode' => '53-126',
+                    'city' => 'Wrocław',
+                    'country' => 'PL',
                 ],
-                "pickupPoint" => null,
+                'pickupPoint' => null,
             ],
-            "hasInvoice" => false,
+            'hasInvoice' => false,
+            'invoice' => null,
         ];
     }
 
-    public function cartRequest(array $payload): void
+    public function deletePromoCode(PromoCodeRequestModel $requestModel): void
     {
-        $this->post($this->baseUrl.'/carts', $payload, $this->module->authConfig);
+        $this->delete($this->baseUrl . '/carts/promo-codes', array_merge($this->addSignature($this->module->authConfig), $requestModel->toArray()));
     }
 
-    public function createCart(): PayEyeCartMappingEntity
+    public function applyPromoCode(PromoCodeRequestModel $requestModel): void
+    {
+        $this->post($this->baseUrl . '/carts/promo-codes', array_merge($this->addSignature($this->module->authConfig), $requestModel->toArray()));
+    }
+
+    public function getCart(array $payload): void
+    {
+        $this->post($this->baseUrl . '/carts', array_merge($this->addSignature($this->module->authConfig), $payload));
+    }
+
+    public function createOrder(array $payload): void
+    {
+        $this->post($this->baseUrl . '/orders', array_merge($this->addSignature($this->module->authConfig), $payload));
+    }
+
+    public function createReturn(ReturnCreateRequestModel $requestModel): void
+    {
+        $this->post($this->baseUrl . '/returns', array_merge($this->addSignature($this->module->authConfig), $requestModel->toArray()));
+    }
+
+    public function updateOrderStatus(array $payload): void
+    {
+        $this->put($this->baseUrl . '/orders/status', array_merge($this->addSignature($this->module->authConfig), $payload));
+    }
+
+    public function createMockCart()
     {
         $cookie = new \Cookie('test');
         \Guest::setNewGuest($cookie);
 
-        Context::getContext()->cookie = $cookie;
+        \Context::getContext()->cookie = $cookie;
 
-        $cart = new Cart();
+        $cart = new \Cart();
         $cart->id_shop_group = 1;
         $cart->id_lang = 1;
         $cart->id_currency = 1;
@@ -87,7 +116,7 @@ class BaseTestCase extends WebTestCase
         $cart->id_guest = $cookie->id_guest;
         $cart->secure_key = ' ';
 
-        Context::getContext()->cart = $cart;
+        \Context::getContext()->cart = $cart;
 
         $id_product = 1;
         $quantity = 3;
@@ -96,6 +125,6 @@ class BaseTestCase extends WebTestCase
 
         $cart->updateQty($quantity, $id_product);
 
-        return PayEyeCartMapping::findByCartId($cart->id);
+        return \PayEyeCartMapping::findByCartId($cart->id);
     }
 }

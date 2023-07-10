@@ -17,6 +17,11 @@ class FrontController extends \ModuleFrontController
     /** @var \PayEye */
     public $module;
 
+    protected function isRequestMethod(string $type): bool
+    {
+        return $_SERVER['REQUEST_METHOD'] === $type;
+    }
+
     /**
      * @throws \Exception
      */

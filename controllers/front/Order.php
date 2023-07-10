@@ -2,19 +2,21 @@
 
 declare(strict_types=1);
 
-use PayEye\Lib\Auth\HashService;
-use PayEye\Lib\Cart\CartRequestModel;
 use PayEye\Lib\Cart\CartResponseModel;
-use PayEye\Lib\Enum\SignatureFrom;
+use PayEye\Lib\Exception\CartContentNotMatchedException;
 use PayEye\Lib\Exception\CartNotFoundException;
+use PayEye\Lib\Exception\OrderAlreadyExistsException;
+use PayEye\Lib\Exception\OrderPriceNotMatchedException;
 use PayEye\Lib\Exception\PayEyePaymentException;
-use PayEye\Lib\Model\Cart as PayEyeCart;
-use PayEye\Lib\Model\Shop as PayEyeShop;
+use PayEye\Lib\Order\OrderCreateRequestModel;
+use PayEye\Lib\Order\OrderCreateResponseModel;
 use PayEye\Lib\Service\AmountService;
+use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
+use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
+use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
-use PrestaShop\Module\PayEye\Service\CartService;
-use PrestaShop\Module\PayEye\Service\ShippingService;
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
+use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 
 defined('_PS_VERSION_') || exit;
 
@@ -23,105 +25,53 @@ class PayEyeOrderModuleFrontController extends FrontController
     /** @var PayEye */
     public $module;
 
+    /** @var Order */
+    private $order;
+
     public function postProcess(): void
     {
         try {
             $amountService = new AmountService();
-            $hashService = new HashService($this->module->authConfig);
 
             $handleRequest = $this->getRequest();
             $this->checkPermission($handleRequest);
 
-            $request = new CartRequestModel($handleRequest);
-            $cartMapping = PayEyeCartMapping::findByCartUuid($request->getCartId());
+            $request = new OrderCreateRequestModel($handleRequest);
 
+            $cartMapping = PayEyeCartMapping::findByCartUuid($request->getCartId());
             if ($cartMapping === null) {
                 throw new CartNotFoundException();
             }
 
             $cart = new Cart($cartMapping->id_cart);
 
-            $customer = new Customer();
-            $customer->firstname = 'Bartosz';
-            $customer->lastname = 'Bury';
-            $customer->email = 'bartosz.bury@payeye.com';
-            $customer->last_passwd_gen = date('Y-m-d H:i:s', strtotime('-'.Configuration::get('PS_PASSWD_TIME_FRONT').'minutes'));
-            $customer->secure_key = md5(uniqid((string)random_int(0, mt_getrandmax()), true));
-            $customer->setWsPasswd((string)\Ramsey\Uuid\Uuid::uuid4());
-            $customer->is_guest = true;
-            $customer->save();
-
-            $cart->id_customer = $customer->id;
-            $this->context->customer = $customer;
-
+            $this->context->customer = new Customer($cart->id_customer);
             $this->context->cart = $cart;
 
-            $address = new Address(Context::getContext()->cart->id_address_delivery);
-            $address->id_country = Country::getByIso($request->getShipping()->getAddress()->getCountry());
-            $address->alias = 'PayEye Address';
-            $address->lastname = 'Bury';
-            $address->firstname = 'Bartosz';
-            $address->address1 = 'aleja Wiśniowa 85B/01';
-            $address->city = 'Wrocław';
-            $address->postcode = '53-126';
-            $address->save();
+            $cartService = $this->currentCart($amountService);
+            if ($request->getCartHash() !== $this->calculateCartHash($cartService)) {
+                throw new CartContentNotMatchedException();
+            }
 
-            $this->context->cart->id_address_delivery = $address->id;
-            $this->context->cart->id_address_invoice = $address->id;
-            $this->context->cart->id_carrier = $cart->id_carrier;
+            $address = new Address($this->context->cart->id_address_delivery);
+            if ($address->id && $request->getShipping()->getPickupPoint()) {
+                $address->address1 = $request->getShipping()->getPickupPoint()->getName();
+                $address->address2 = $request->getShipping()->getAddress()->getFirstLine();
+                $address->save();
+            }
 
-            $checkoutSessionCore = new CheckoutSessionCore(
-                $this->context, new DeliveryOptionsFinder(
-                    $this->context,
-                    Context::getContext()->getTranslator(),
-                    new ObjectPresenter(),
-                    new \PrestaShop\PrestaShop\Adapter\Product\PriceFormatter()
-                )
-            );
-
-            $checkoutSessionCore->setIdAddressDelivery($address->id);
-
-            $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
-
-            $shippingId = $shippingService->getDefaultShipping($request->getDeliveryType())->id;
-
-            $this->context->cart->setDeliveryOption([
-                $address->id => $shippingId.",",
+            \Hook::exec('actionPayEyeApiBeforeCreateOrder', [
+                'shippingProvider' => $request->getShippingProvider(),
+                'pickupPointName' => $this->getPickupPointName($request),
             ]);
 
-            $cartService = new CartService($this->context->cart, $amountService);
+            $order = $this->createOrder($amountService, $request);
 
-            $currency = $this->context->currency;
-            $total = (float)$this->context->cart->getOrderTotal(true, Cart::BOTH);
+            if ($cartService->cart->total !== $order->totalAmount) {
+                throw new OrderPriceNotMatchedException();
+            }
 
-            $this->context->cart->secure_key = $customer->secure_key;
-            $this->context->cart->save();
-
-            $this->module->validateOrder(
-                $this->context->cart->id,
-                (int)Configuration::get('PS_OS_BANKWIRE'), // dowiedziec się co to jest
-                $total,
-                $this->module->displayName,
-                null,
-                [],
-                (int)$currency->id,
-                false,
-                $customer->secure_key
-            );
-
-            $cartResponse = CartResponseModel::builder()
-                ->setShop($this->getShop())
-                ->setPromoCodes([])
-                ->setShippingId($shippingId)
-                ->setShippingMethods($shippingService->getShippingMethods())
-                ->setCart($this->getCart($cartService))
-                ->setCurrency(Currency::getIsoCodeById((int)$this->context->cart->id_currency))
-                ->setProducts($cartService->getProducts())
-                ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE);
-
-            $cartResponse->setCartHash($this->calculateCartHash($cartResponse, $hashService));
-
-            $this->exitWithResponse($cartResponse->toArray());
+            $this->exitWithResponse($order->toArray());
         } catch (PayEyePaymentException $exception) {
             $this->exitWithPayEyeExceptionResponse($exception);
         } catch (Exception|Throwable $exception) {
@@ -129,35 +79,95 @@ class PayEyeOrderModuleFrontController extends FrontController
         }
     }
 
-    private function getShop(): PayEyeShop
+    /**
+     * @throws PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws Exception
+     */
+    private function createOrder(AmountService $amountService, OrderCreateRequestModel $requestModel): OrderCreateResponseModel
     {
-        return PayEyeShop::builder()
-            ->setName(Configuration::get('PS_SHOP_NAME'))
-            ->setUrl($this->context->shop->getBaseURL());
-    }
+        $currency = $this->context->currency;
+        $total = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
 
-    private function getCart(CartService $cartService): PayEyeCart
-    {
-        $total = $cartService->getTotalAmount();
-        $regularTotal = $cartService->getRegularProductsTotal() + $cartService->getShippingAmount();
+        $this->context->cart->secure_key = $this->context->customer->secure_key;
+        $this->context->cart->save();
 
-        return PayEyeCart::builder()
-            ->setTotal($total)
-            ->setRegularTotal($regularTotal)
-            ->setDiscount(0)
-            ->setProducts($cartService->getProductsTotal())
-            ->setRegularProducts($cartService->getRegularProductsTotal());
-    }
+        if (Validate::isLoadedObject($this->context->cart) && $this->context->cart->orderExists()) {
+            throw new OrderAlreadyExistsException();
+        }
 
-    private function calculateCartHash(CartResponseModel $cart, HashService $hashService): string
-    {
-        return $hashService->cartHash(
-            $cart->promoCodes,
-            $cart->shippingMethods,
-            $cart->cart,
-            $cart->shippingId,
-            $cart->currency,
-            $cart->products
+        $this->module->validateOrder(
+            $this->context->cart->id,
+            $this->module->orderStatuses->getCreated(),
+            $total,
+            $this->module->displayName,
+            null,
+            [],
+            (int) $currency->id,
+            false,
+            $this->context->customer->secure_key
         );
+
+        $this->order = new Order($this->module->currentOrder);
+
+        $order = $this->order;
+
+        return OrderCreateResponseModel::builder()
+            ->setCheckoutUrl($this->checkoutUrl())
+            ->setOrderId((string) $order->id)
+            ->setTotalAmount($amountService->convertFloatToInteger($order->getOrdersTotalPaid()))
+            ->setCartAmount($amountService->convertFloatToInteger($order->total_products_wt))
+            ->setShippingAmount($amountService->convertFloatToInteger($order->total_shipping))
+            ->setCurrency(Currency::getIsoCodeById((int) $order->id_currency));
+    }
+
+    private function checkoutUrl(): string
+    {
+        $order = $this->order;
+        $customer = $this->context->customer;
+
+        return $this->context->link->getPageLink('guest-tracking') . "?controller=guest-tracking&order_reference=$order->reference&email=$customer->email";
+    }
+
+    private function currentCart(AmountService $amountService): CartResponseModel
+    {
+        $checkoutSessionCore = new CheckoutSessionCore(
+            $this->context, new DeliveryOptionsFinder(
+                $this->context,
+                $this->context->getTranslator(),
+                new ObjectPresenter(),
+                new PriceFormatter()
+            )
+        );
+
+        $cart = $this->context->cart;
+        $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
+        $cartResponseService = new CartResponseService($cart, $amountService);
+
+        return CartResponseModel::builder()
+            ->setPromoCodes($cartResponseService->promoCodes)
+            ->setShippingMethods($shippingService->shippingMethods)
+            ->setCart($cartResponseService->payeyeCart)
+            ->setShippingId((string) $cart->id_carrier)
+            ->setCurrency(Currency::getIsoCodeById((int) $cart->id_currency))
+            ->setProducts($cartResponseService->products);
+    }
+
+    private function calculateCartHash(CartResponseModel $cart): string
+    {
+        return (new CartHashService($this->module->authConfig))->calculateCartHash($cart);
+    }
+
+    private function getPickupPointName(OrderCreateRequestModel $request): ?string
+    {
+        $shipping = $request->getShipping();
+
+        $pickupPoint = $shipping->getPickupPoint();
+
+        if ($pickupPoint === null) {
+            return null;
+        }
+
+        return $pickupPoint->getName();
     }
 }
