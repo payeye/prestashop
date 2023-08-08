@@ -13,7 +13,7 @@ class BaseTestCase extends WebTestCase
     use TestCaseTrait;
 
     /** @var string */
-    private $baseUrl = 'http://payeye-prestashop.local/api-payeye/v1';
+    private $baseUrl = 'http://payeye-prestashop.local/module-payeye/v1';
 
     /** @var \PayEye */
     protected $module;

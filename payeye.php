@@ -23,7 +23,7 @@ use PrestaShop\Module\PayEye\Translations\OrderStatesTranslations;
 
 class PayEye extends PaymentModule
 {
-    public const NAMESPACE = 'api-payeye/v1';
+    public const NAMESPACE = 'module-payeye/v1';
 
     /** @var AuthConfig */
     public $authConfig;
