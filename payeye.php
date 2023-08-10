@@ -210,6 +210,7 @@ class PayEye extends PaymentModule
             }
         }
 
+        $output .= $this->fetch('module:' . $this->name . '/views/templates/admin/info.tpl');
         return $output . $this->displayForm();
     }
 
