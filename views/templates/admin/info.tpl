@@ -6,18 +6,15 @@
  * @license   http://opensource.org/licenses/LGPL-3.0  Open Software License (LGPL 3.0)
 *}
 
-<div class="panel">
-    <div class="panel-heading">Informacja</div>
-    <p>
-
-    </p>
-</div>
-
-<script>
-    $.ajax({
-        url: "https://static.payeye.com/e-commerce/modules/prestashop/e-payeye/version.json",
-        success: function ($params) {
-            console.log($params);
-        }
-    });
-</script>
+{if $PAYEYE_MODULE_VERSION.update}
+    <div class="panel">
+        <div class="panel-heading">Informacja</div>
+        <p>
+            Obecna wersja: {$PAYEYE_MODULE_VERSION.current}
+            <br>
+            Nowa wersja modułu: {$PAYEYE_MODULE_VERSION.version}
+            <br>
+            Adres url: <a href="{$PAYEYE_MODULE_VERSION.url}">{$PAYEYE_MODULE_VERSION.url}</a>
+        </p>
+    </div>
+{/if}
