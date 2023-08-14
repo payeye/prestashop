@@ -54,11 +54,15 @@ class PayEyeOrderModuleFrontController extends FrontController
             }
 
             $address = new Address($this->context->cart->id_address_delivery);
-            if ($address->id && $request->getShipping()->getPickupPoint()) {
+            $address->address1 = $request->getShipping()->getAddress()->getFirstLine();
+            $address->city = $request->getShipping()->getAddress()->getCity();
+            $address->postcode = $request->getShipping()->getAddress()->getPostCode();
+
+            if ($request->getShipping()->getPickupPoint()) {
                 $address->address1 = $request->getShipping()->getPickupPoint()->getName();
                 $address->address2 = $request->getShipping()->getAddress()->getFirstLine();
-                $address->save();
             }
+            $address->save();
 
             \Hook::exec('actionPayEyeApiBeforeCreateOrder', [
                 'shippingProvider' => $request->getShippingProvider(),
