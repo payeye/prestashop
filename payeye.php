@@ -210,6 +210,8 @@ class PayEye extends PaymentModule
             }
         }
 
+        $output .= $this->checkVersion();
+
         return $output . $this->displayForm();
     }
 
@@ -328,5 +330,27 @@ class PayEye extends PaymentModule
         }
 
         return $carrier;
+    }
+
+    private function checkVersion(): string
+    {
+        $output = '';
+
+        try {
+            $response = \PayEye\Lib\HttpClient\Infrastructure\HttpClient::get('https://static.payeye.com/e-commerce/modules/prestashop/e-payeye/version.json')->getArrayResponse();
+
+            $this->smarty->assign('PAYEYE_MODULE_VERSION', [
+                'url' => $response['url'],
+                'current' => $this->version,
+                'version' => $response['version'],
+                'update' => version_compare($response['version'], $this->version) === 1,
+            ]);
+
+            $output .= $this->fetch('module:' . $this->name . '/views/templates/admin/info.tpl');
+        } catch (\PayEye\Lib\HttpClient\Exception\HttpException $e) {
+            // do nothing
+        }
+
+        return $output;
     }
 }
