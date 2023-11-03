@@ -12,10 +12,14 @@ class WidgetUI
     /** @var bool */
     private $mobileOpen;
 
-    public function __construct(int $bottom, bool $mobileOpen)
+    /** @var bool */
+    private $widgetVisible;
+
+    public function __construct(int $bottom, bool $mobileOpen, bool $widgetVisible)
     {
         $this->bottom = $bottom;
         $this->mobileOpen = $mobileOpen;
+        $this->widgetVisible = $widgetVisible;
     }
 
     public function getBottom(): int
@@ -27,4 +31,10 @@ class WidgetUI
     {
         return $this->mobileOpen;
     }
+
+    public function getWidgetVisible(): bool
+    {
+        return $this->widgetVisible;
+    }
 }
+

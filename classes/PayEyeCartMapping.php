@@ -1,6 +1,7 @@
 <?php
 
 use PrestaShop\Module\PayEye\Database\Database;
+use PrestaShop\Module\PayEye\Admin\Configuration\ConfigurationField;
 
 class PayEyeCartMapping extends ObjectModel
 {
@@ -62,6 +63,9 @@ class PayEyeCartMapping extends ObjectModel
 
     private static function createObject($result): ?self
     {
+
+        // $widget_visible = (bool) Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE);
+        
         if (!$result) {
             return null;
         }
