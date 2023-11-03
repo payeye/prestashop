@@ -115,6 +115,24 @@ class AdminFormConfiguration
                         'desc' => $this->module->l('Distance from the bottom screen (unit px). Default 20.'),
                         'name' => ConfigurationField::WIDGET_UI_BOTTOM,
                     ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->module->l('Show widget after adding product to cart'),
+                        'desc' => $this->module->l('Add this script to show on-click widget (only on disabled mode): <div id="payeye-run-widget"></div>'),
+                        'name' => ConfigurationField::WIDGET_UI_WIDGET_VISIBLE,
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->module->l('Enabled'),
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->module->l('Disabled'),
+                            ],
+                        ],
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->module->l('Save'),

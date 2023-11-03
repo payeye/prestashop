@@ -26,6 +26,12 @@ class HookActionCartSave
         try {
             /** @var \Cart $cart */
             $cart = $payload['cart'];
+
+            // error fix here
+            if (!$cart) {
+                return;
+            }
+
             $cartId = $cart->id;
 
             if ($cartId === null) {
@@ -48,7 +54,7 @@ class HookActionCartSave
             $cartMapping->uuid = Uuid::generate();
 
             $cartMapping->add();
-        } catch (\PrestaShopDatabaseException|\PrestaShopException|HttpException $e) {
+        } catch (\PrestaShopDatabaseException | \PrestaShopException | HttpException $e) {
             // do nothing
         }
     }

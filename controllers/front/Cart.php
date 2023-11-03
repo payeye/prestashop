@@ -129,7 +129,7 @@ class PayEyeCartModuleFrontController extends FrontController
         } else {
             $customer->firstname = 'null';
             $customer->lastname = 'null';
-            $customer->email = 'ghost@email';
+            $customer->email = 'customer@payeye.com';
         }
 
         $customer->last_passwd_gen = date('Y-m-d H:i:s', strtotime('-' . Configuration::get('PS_PASSWD_TIME_FRONT') . 'minutes'));
@@ -151,6 +151,9 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $address->id_customer = $this->context->customer->id;
 
+        $isoCodeForPoland = 'PL';
+        $poland = Country::getByIso($isoCodeForPoland);
+
         if ($shipping) {
             $address->id_country = Country::getByIso($shipping->getAddress()->getCountry());
             $address->alias = $shipping->getLabel();
@@ -162,15 +165,18 @@ class PayEyeCartModuleFrontController extends FrontController
 
             if ($request->getBilling()) {
                 $address->phone = $request->getBilling()->getPhoneNumber();
+                $address->phone_mobile = $request->getBilling()->getPhoneNumber();
             }
         } else {
-            $address->id_country = 0;
+            $address->id_country = $poland;
             $address->alias = ' ';
             $address->firstname = ' ';
             $address->lastname = ' ';
             $address->address1 = ' ';
             $address->city = ' ';
             $address->postcode = ' ';
+            $address->phone = ' ';
+            $address->phone_mobile = ' ';
         }
 
         $address->save();
@@ -188,6 +194,9 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $address->id_customer = $this->context->customer->id;
 
+        $isoCodeForPoland = 'PL';
+        $poland = Country::getByIso($isoCodeForPoland);
+
         if ($billing) {
             $address->id_country = Country::getByIso($billing->getAddress()->getCountry());
             $address->alias = ' ';
@@ -199,7 +208,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $address->city = $billing->getAddress()->getCity();
             $address->postcode = $billing->getAddress()->getPostCode();
         } else {
-            $address->id_country = 0;
+            $address->id_country = $poland;
             $address->alias = ' ';
             $address->firstname = ' ';
             $address->lastname = ' ';

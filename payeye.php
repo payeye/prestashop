@@ -47,7 +47,7 @@ class PayEye extends PaymentModule
     {
         $this->name = 'payeye';
         $this->tab = 'payments_gateways';
-        $this->version = '0.0.30';
+        $this->version = '0.0.35';
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
         $this->controllers = ['Cart', 'Order', 'OrderUpdate', 'Widget', 'Return'];
@@ -77,7 +77,8 @@ class PayEye extends PaymentModule
         );
         $this->widgetUI = new WidgetUI(
             (int) Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM),
-            (bool) Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN)
+            (bool) Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN),
+            (bool) Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE)
         );
         $this->testMode = (bool) Configuration::get(ConfigurationField::TEST_MODE);
     }
@@ -117,6 +118,7 @@ class PayEye extends PaymentModule
             //            Tools::redirect($url);
         }
 
+
         $this->context->controller->registerJavascript(
             'payeye',
             $this->getPathUri() . 'views/js/script.js',
@@ -145,6 +147,9 @@ class PayEye extends PaymentModule
                     ],
                     'mobile' => [
                         'open' => $this->widgetUI->getMobileOpen(),
+                    ],
+                    'widget' => [
+                        'visible' => $this->widgetUI->getWidgetVisible(),
                     ],
                 ],
             ],
@@ -176,6 +181,7 @@ class PayEye extends PaymentModule
             )
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_BOTTOM, 20)
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, 0)
+            && Configuration::updateValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE, 1)
             && Configuration::updateValue(ConfigurationField::TEST_MODE, 1);
     }
 
@@ -190,6 +196,7 @@ class PayEye extends PaymentModule
             $privateKey = (string) Tools::getValue(ConfigurationField::PRIVATE_KEY);
             $widgetUiBottom = (int) Tools::getValue(ConfigurationField::WIDGET_UI_BOTTOM);
             $widgetUiMobileOpen = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN);
+            $widgetVisible = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE);
 
             if ($widgetUiBottom === 0 || $widgetUiBottom < 0) {
                 $widgetUiBottom = 20;
@@ -202,7 +209,8 @@ class PayEye extends PaymentModule
                 && Configuration::updateValue(ConfigurationField::PRIVATE_KEY, $privateKey)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_BOTTOM, $widgetUiBottom)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, $widgetUiMobileOpen)
-                && Configuration::updateValue(ConfigurationField::SHIPPING_MATCHING, HandleConfiguration::handleMatching(Tools::getAllValues()))
+                && Configuration::updateValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE, $widgetVisible)
+                && Configuration::updateValue(ConfigurationField::SHIPPING_MATCHING, HandleConfiguration::handleMatching(Tools::getAllValues())) // ten update nie działa chyba ze działa ale front to źle wyświetla
             ) {
                 $output = $this->displayConfirmation($this->l('Settings updated'));
             } else {
@@ -266,6 +274,7 @@ class PayEye extends PaymentModule
             [
                 ConfigurationField::WIDGET_UI_BOTTOM => Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM),
                 ConfigurationField::WIDGET_UI_MOBILE_OPEN => Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN),
+                ConfigurationField::WIDGET_UI_WIDGET_VISIBLE => Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE),
             ]
         );
     }
@@ -319,7 +328,8 @@ class PayEye extends PaymentModule
         $carrier = [];
         foreach ($carrierMatching as $item) {
             foreach ($matchedShippingProviders as $value) {
-                if ($value['carrierId'] === $item['carrierId']) {
+
+                if ($value['carrierId'] == $item['carrierId']) {
                     $carrier[$item['name']] = $value['provider'];
                 }
             }
