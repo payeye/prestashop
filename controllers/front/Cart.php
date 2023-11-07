@@ -98,13 +98,16 @@ class PayEyeCartModuleFrontController extends FrontController
         $this->context->cart->secure_key = $customer->secure_key;
         $this->context->cart->save();
 
+	    $currencyId = (int) $this->context->cart->id_currency;
+	    $currency = new Currency($currencyId);
+
         $cartResponse = CartResponseModel::builder()
             ->setShop($this->getShop())
             ->setPromoCodes($cartResponseService->promoCodes)
             ->setShippingId($shippingId)
             ->setShippingMethods($shippingService->shippingMethods)
             ->setCart($cartResponseService->payeyeCart)
-            ->setCurrency(Currency::getIsoCodeById((int) $this->context->cart->id_currency))
+            ->setCurrency($currency->iso_code)
             ->setProducts($cartResponseService->products)
             ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE);
 

@@ -10,6 +10,9 @@ Run standard code:
 Run PHPStan - PHP Static Analysis Tool (https://github.com/phpstan/phpstan)
 - composer run phpstan
 
+# Version 0.0.36
+- Compatibility with PrestaShop 1.7.6 and higher
+
 # Version 0.0.35
 - Fix nullable shipping id
 - Add widget on-click

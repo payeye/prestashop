@@ -116,13 +116,16 @@ class PayEyeOrderModuleFrontController extends FrontController
 
         $order = $this->order;
 
+	 $currencyId = (int) $order->id_currency;
+	 $currency = new Currency($currencyId);
+
         return OrderCreateResponseModel::builder()
             ->setCheckoutUrl($this->checkoutUrl())
             ->setOrderId((string) $order->id)
             ->setTotalAmount($amountService->convertFloatToInteger($order->getOrdersTotalPaid()))
             ->setCartAmount($amountService->convertFloatToInteger($order->total_products_wt))
             ->setShippingAmount($amountService->convertFloatToInteger($order->total_shipping))
-            ->setCurrency(Currency::getIsoCodeById((int) $order->id_currency));
+	        ->setCurrency($currency->iso_code);
     }
 
     private function checkoutUrl(): string
@@ -148,12 +151,15 @@ class PayEyeOrderModuleFrontController extends FrontController
         $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
         $cartResponseService = new CartResponseService($cart, $amountService);
 
+	 $currencyId = (int) $cart->id_currency;
+	 $currency = new Currency($currencyId);	
+
         return CartResponseModel::builder()
             ->setPromoCodes($cartResponseService->promoCodes)
             ->setShippingMethods($shippingService->shippingMethods)
             ->setCart($cartResponseService->payeyeCart)
             ->setShippingId((string) $cart->id_carrier)
-            ->setCurrency(Currency::getIsoCodeById((int) $cart->id_currency))
+            ->setCurrency($currency->iso_code)
             ->setProducts($cartResponseService->products);
     }
 
