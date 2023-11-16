@@ -156,9 +156,13 @@ class CartResponseService
 
         $attributes = [];
 
+        $attributeClass = $this->isPrestaShop8OrLater() ? '\ProductAttribute' : '\Attribute';
+
         foreach ($attributesName as $value) {
+
+            
             $id = $value['id_attribute'];
-            $attribute = new \Attribute($id, $this->cart->id_lang);
+            $attribute = new $attributeClass($id, $this->cart->id_lang);
             $group = new \AttributeGroup($attribute->id_attribute_group, $this->cart->id_lang);
 
             $attributes[] = ProductAttribute::builder()
@@ -169,4 +173,10 @@ class CartResponseService
 
         return $attributes;
     }
+
+    private function isPrestaShop8OrLater(): bool
+    {
+        return version_compare(_PS_VERSION_, '8.0.0', '>=');
+    }
+
 }

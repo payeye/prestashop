@@ -92,11 +92,18 @@ class PayEye extends PaymentModule
             && $this->registerHook('paymentOptions')
             && $this->registerHook('paymentReturn')
             && $this->registerHook('moduleRoutes')
-            && $this->registerHook('actionBeforeCartUpdateQty')
+            && ($this->isPrestaShop178OrLater() ? $this->registerHook('actionCartUpdateQuantityBefore') : $this->registerHook('ActionBeforeCartUpdateQty'))
+            && $this->registerHook('actionObjectProductInCartDeleteAfter')
             && $this->registerHook('actionFrontControllerSetMedia')
             && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('adminOrder')
             && $this->registerHook('actionPayEyeApiBeforeCreateOrder');
+    }
+
+
+    private function isPrestaShop178OrLater(): bool
+    {
+        return version_compare(_PS_VERSION_, '1.7.8', '>=');
     }
 
     public function hookModuleRoutes(): array
@@ -297,7 +304,17 @@ class PayEye extends PaymentModule
         return $matching ? json_decode($matching, true) : [];
     }
 
+    public function hookActionCartUpdateQuantityBefore(array $payload): void
+    {
+            (new HookActionCartSave($this))($payload);
+    }
+
     public function hookActionBeforeCartUpdateQty(array $payload): void
+    {
+            (new HookActionCartSave($this))($payload);
+    }
+
+    public function hookActionObjectProductInCartDeleteAfter(array $payload): void
     {
         (new HookActionCartSave($this))($payload);
     }

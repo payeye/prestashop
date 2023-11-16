@@ -103,8 +103,7 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $cartResponse = CartResponseModel::builder()
             ->setShop($this->getShop())
-            // ->setPromoCodes($cartResponseService->promoCodes)
-            ->setPromoCodes([])
+            ->setPromoCodes($cartResponseService->promoCodes)
             ->setShippingId($shippingId)
             ->setShippingMethods($shippingService->shippingMethods)
             ->setCart($cartResponseService->payeyeCart)

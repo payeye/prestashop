@@ -15,7 +15,6 @@ Run PHPStan - PHP Static Analysis Tool (https://github.com/phpstan/phpstan)
 - fix prices with tax
 - fix refresh cart hook
 - add shop country validation in back office
-- return empty array of promoCodes
 
 # Version 0.0.36
 - Compatibility with PrestaShop 1.7.6 and higher
