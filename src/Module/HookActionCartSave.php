@@ -41,7 +41,7 @@ class HookActionCartSave
             $cartMapping = \PayEyeCartMapping::findByCartId($cartId);
 
             if ($cartMapping && $cartMapping->open) {
-                // $this->silentPush($cartMapping);
+                $this->silentPush($cartMapping);
             }
 
             if ($cartMapping) {

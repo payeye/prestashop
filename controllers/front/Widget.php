@@ -30,6 +30,8 @@ class PayEyeWidgetModuleFrontController extends FrontController
         }
 
         $price = $this->context->cart->getSummaryDetails()['total_price'];
+        $shippingPrice = $this->context->cart->getSummaryDetails()['total_shipping'];
+        $price= $price - $shippingPrice;
         $price = number_format((float) $price, 2, ',', ' ');
 
         $qrCode = new QRCode();

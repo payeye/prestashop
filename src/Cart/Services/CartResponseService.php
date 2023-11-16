@@ -47,6 +47,11 @@ class CartResponseService
     {
         return $this->amountService->convertFloatToInteger($this->cart->getSummaryDetails()['total_price']);
     }
+    
+    public function getProductPrice(): int
+    {
+        return $this->amountService->convertFloatToInteger($this->cart->getSummaryDetails()['total_products_wt']);
+    }
 
     public function getDiscount(): int
     {
@@ -60,7 +65,7 @@ class CartResponseService
 
     private function buildCart(): PayEyeCart
     {
-        $total = $this->getTotal();
+        $total = $this->getProductPrice() + $this->getShippingAmount() - $this->getDiscount();
         $regularTotal = $this->regularProductsTotal + $this->getShippingAmount();
 
         return PayEyeCart::builder()

@@ -47,7 +47,7 @@ class PayEye extends PaymentModule
     {
         $this->name = 'payeye';
         $this->tab = 'payments_gateways';
-        $this->version = '0.0.36';
+        $this->version = '0.0.37';
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
         $this->controllers = ['Cart', 'Order', 'OrderUpdate', 'Widget', 'Return'];
@@ -92,7 +92,7 @@ class PayEye extends PaymentModule
             && $this->registerHook('paymentOptions')
             && $this->registerHook('paymentReturn')
             && $this->registerHook('moduleRoutes')
-            && $this->registerHook('actionCartSave')
+            && $this->registerHook('actionBeforeCartUpdateQty')
             && $this->registerHook('actionFrontControllerSetMedia')
             && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('adminOrder')
@@ -228,7 +228,8 @@ class PayEye extends PaymentModule
         $carriers = Carrier::getCarriers($this->context->language->id, true, false, false, null, CarrierCore::ALL_CARRIERS);
         $formConfiguration = new AdminFormConfiguration($this);
 
-        $form['auth'] = $formConfiguration->authFormType();
+        $shop_country_name = Configuration::get('PS_SHOP_COUNTRY');
+        $form['auth'] = $formConfiguration->authFormType($shop_country_name);
 
         $carriers = array_map(function ($carrier) use ($formConfiguration) {
             return [
@@ -296,7 +297,7 @@ class PayEye extends PaymentModule
         return $matching ? json_decode($matching, true) : [];
     }
 
-    public function hookActionCartSave(array $payload): void
+    public function hookActionBeforeCartUpdateQty(array $payload): void
     {
         (new HookActionCartSave($this))($payload);
     }

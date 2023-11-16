@@ -103,7 +103,8 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $cartResponse = CartResponseModel::builder()
             ->setShop($this->getShop())
-            ->setPromoCodes($cartResponseService->promoCodes)
+            // ->setPromoCodes($cartResponseService->promoCodes)
+            ->setPromoCodes([])
             ->setShippingId($shippingId)
             ->setShippingMethods($shippingService->shippingMethods)
             ->setCart($cartResponseService->payeyeCart)
@@ -154,8 +155,21 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $address->id_customer = $this->context->customer->id;
 
-        $isoCodeForPoland = 'PL';
-        $poland = Country::getByIso($isoCodeForPoland);
+        $shop_country_name = Configuration::get('PS_SHOP_COUNTRY');
+        $countries = Country::getCountries($active = true); // Pobranie wszystkich krajów
+
+        foreach ($countries as $country) {
+            if ($country['name'] === $shop_country_name) {
+                $countryISO = $country['iso_code'];
+            break;
+            }
+        }
+        if (!empty($countryISO)){
+            $country = Country::getByIso($countryISO);
+        }
+        else{
+            $country = 0;
+        }
 
         if ($shipping) {
             $address->id_country = Country::getByIso($shipping->getAddress()->getCountry());
@@ -171,7 +185,7 @@ class PayEyeCartModuleFrontController extends FrontController
                 $address->phone_mobile = $request->getBilling()->getPhoneNumber();
             }
         } else {
-            $address->id_country = $poland;
+            $address->id_country = $country;
             $address->alias = ' ';
             $address->firstname = ' ';
             $address->lastname = ' ';
@@ -197,8 +211,21 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $address->id_customer = $this->context->customer->id;
 
-        $isoCodeForPoland = 'PL';
-        $poland = Country::getByIso($isoCodeForPoland);
+        $shop_country_name = Configuration::get('PS_SHOP_COUNTRY');
+        $countries = Country::getCountries($active = true); // Pobranie wszystkich krajów
+
+        foreach ($countries as $country) {
+            if ($country['name'] === $shop_country_name) {
+                $countryISO = $country['iso_code'];
+            break;
+            }
+        }
+        if (!empty($countryISO)){
+            $country = Country::getByIso($countryISO);
+        }
+        else{
+            $country = 0;
+        }
 
         if ($billing) {
             $address->id_country = Country::getByIso($billing->getAddress()->getCountry());
@@ -211,7 +238,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $address->city = $billing->getAddress()->getCity();
             $address->postcode = $billing->getAddress()->getPostCode();
         } else {
-            $address->id_country = $poland;
+            $address->id_country = $country;
             $address->alias = ' ';
             $address->firstname = ' ';
             $address->lastname = ' ';

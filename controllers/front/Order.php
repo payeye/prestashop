@@ -155,7 +155,8 @@ class PayEyeOrderModuleFrontController extends FrontController
 	 $currency = new Currency($currencyId);	
 
         return CartResponseModel::builder()
-            ->setPromoCodes($cartResponseService->promoCodes)
+            // ->setPromoCodes($cartResponseService->promoCodes)
+            ->setPromoCodes([])
             ->setShippingMethods($shippingService->shippingMethods)
             ->setCart($cartResponseService->payeyeCart)
             ->setShippingId((string) $cart->id_carrier)
