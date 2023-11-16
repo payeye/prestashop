@@ -148,7 +148,7 @@
         },
         {
             "name": "payeye/lib",
-            "version": "1.18.12",
+            "version": "1.18.17",
             "source": {
                 "type": "git",
                 "url": "https://gitlab.com/payeye2/frontend216/ecommerce/ecommerce-php-library.git",
