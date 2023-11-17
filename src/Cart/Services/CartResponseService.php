@@ -9,6 +9,7 @@ use PayEye\Lib\Model\ProductAttribute;
 use PayEye\Lib\Model\ProductImages;
 use PayEye\Lib\Model\PromoCode;
 use PayEye\Lib\Service\AmountService;
+use \Address as PrestaShopAddress;
 
 class CartResponseService
 {
@@ -65,8 +66,16 @@ class CartResponseService
 
     private function buildCart(): PayEyeCart
     {
-        $total = $this->getProductPrice() + $this->getShippingAmount() - $this->getDiscount();
-        $regularTotal = $this->regularProductsTotal + $this->getShippingAmount();
+        $deliveryAddressId = $this->cart->id_address_delivery;
+        $deliveryAddress = new PrestaShopAddress($deliveryAddressId);
+        
+        if($deliveryAddress->city == ' '){
+            $total = $this->getProductPrice() - $this->getDiscount();
+            $regularTotal = $this->regularProductsTotal;
+        }else{
+            $total = $this->getProductPrice() + $this->getShippingAmount() - $this->getDiscount();
+            $regularTotal = $this->regularProductsTotal + $this->getShippingAmount();
+        }
 
         return PayEyeCart::builder()
             ->setTotal($total)
