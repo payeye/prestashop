@@ -10,6 +10,10 @@ Run standard code:
 Run PHPStan - PHP Static Analysis Tool (https://github.com/phpstan/phpstan)
 - composer run phpstan
 
+# Version 0.0.38
+- add different types of cart (STANDARD, VIRTUAL, MIXED) 
+- payeye/lib up to 1.18.17
+
 # Version 0.0.37
 - fix widget prices
 - fix prices with tax

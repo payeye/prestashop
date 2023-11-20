@@ -16,6 +16,7 @@ use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
+use PayEye\Lib\Enum\CartType;
 
 defined('_PS_VERSION_') || exit;
 
@@ -50,7 +51,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $this->exitWithResponse($response->toArray());
         } catch (PayEyePaymentException $exception) {
             $this->exitWithPayEyeExceptionResponse($exception);
-        } catch (Exception|Throwable $exception) {
+        } catch (Exception | Throwable $exception) {
             $this->exitWithExceptionMessage($exception);
         }
     }
@@ -76,7 +77,8 @@ class PayEyeCartModuleFrontController extends FrontController
         $this->context->cart->id_address_invoice = $invoiceAddress->id;
 
         $checkoutSessionCore = new CheckoutSessionCore(
-            $this->context, new DeliveryOptionsFinder(
+            $this->context,
+            new DeliveryOptionsFinder(
                 $this->context,
                 $this->context->getTranslator(),
                 new ObjectPresenter(),
@@ -98,8 +100,27 @@ class PayEyeCartModuleFrontController extends FrontController
         $this->context->cart->secure_key = $customer->secure_key;
         $this->context->cart->save();
 
-	    $currencyId = (int) $this->context->cart->id_currency;
-	    $currency = new Currency($currencyId);
+        $currencyId = (int) $this->context->cart->id_currency;
+        $currency = new Currency($currencyId);
+
+        $products = $this->context->cart->getProducts();
+        $hasPhysicalProducts = false;
+        $hasVirtualProducts = false;
+        foreach ($products as $product) {
+            if ($product['is_virtual']) {
+                $hasVirtualProducts = true;
+            } else {
+                $hasPhysicalProducts = true;
+            }
+        }
+
+        if ($hasPhysicalProducts && $hasVirtualProducts) {
+            $cartType = CartType::MIXED;
+        } else if ($hasVirtualProducts) {
+            $cartType = CartType::VIRTUAL;
+        } else {
+            $cartType = CartType::STANDARD;
+        }
 
         $cartResponse = CartResponseModel::builder()
             ->setShop($this->getShop())
@@ -109,7 +130,8 @@ class PayEyeCartModuleFrontController extends FrontController
             ->setCart($cartResponseService->payeyeCart)
             ->setCurrency($currency->iso_code)
             ->setProducts($cartResponseService->products)
-            ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE);
+            ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE)
+            ->setCartType($cartType);
 
         $cartResponse->setCartHash($this->calculateCartHash($cartResponse));
 
@@ -160,13 +182,12 @@ class PayEyeCartModuleFrontController extends FrontController
         foreach ($countries as $country) {
             if ($country['name'] === $shop_country_name) {
                 $countryISO = $country['iso_code'];
-            break;
+                break;
             }
         }
-        if (!empty($countryISO)){
+        if (!empty($countryISO)) {
             $country = Country::getByIso($countryISO);
-        }
-        else{
+        } else {
             $country = 0;
         }
 
@@ -216,13 +237,12 @@ class PayEyeCartModuleFrontController extends FrontController
         foreach ($countries as $country) {
             if ($country['name'] === $shop_country_name) {
                 $countryISO = $country['iso_code'];
-            break;
+                break;
             }
         }
-        if (!empty($countryISO)){
+        if (!empty($countryISO)) {
             $country = Country::getByIso($countryISO);
-        }
-        else{
+        } else {
             $country = 0;
         }
 
