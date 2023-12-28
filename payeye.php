@@ -23,8 +23,6 @@ use PrestaShop\Module\PayEye\Translations\OrderStatesTranslations;
 
 class PayEye extends PaymentModule
 {
-    public const NAMESPACE = 'module-payeye/v1';
-
     /** @var AuthConfig */
     public $authConfig;
 
@@ -47,7 +45,7 @@ class PayEye extends PaymentModule
     {
         $this->name = 'payeye';
         $this->tab = 'payments_gateways';
-        $this->version = '0.0.38';
+        $this->version = '0.0.39';
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
         $this->controllers = ['Cart', 'Order', 'OrderUpdate', 'Widget', 'Return'];
@@ -133,7 +131,6 @@ class PayEye extends PaymentModule
                 'position' => 'footer',
                 'inline' => false,
                 'priority' => 1000,
-                'version' => $this->version,
             ]
         );
 
@@ -147,7 +144,7 @@ class PayEye extends PaymentModule
         Media::addJsDef([
             'payeye' => [
                 'platform' => 'PRESTASHOP',
-                'apiUrl' => $this->context->shop->getBaseURL(true) . self::NAMESPACE,
+                'apiUrl' => $this->context->shop->getBaseURL(true) . 'module-payeye/v1',
                 'ui' => [
                     'position' => [
                         'bottom' => $this->widgetUI->getBottom() . 'px',

@@ -30,7 +30,7 @@ class HookModuleRoutes
     {
         return [
             'controller' => $controller,
-            'rule' => \PayEye::NAMESPACE . '/' . $path,
+            'rule' => 'module-payeye/v1' . '/' . $path,
             'keywords' => [],
             'params' => [
                 'fc' => 'module',

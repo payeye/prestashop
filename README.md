@@ -10,6 +10,10 @@ Run standard code:
 Run PHPStan - PHP Static Analysis Tool (https://github.com/phpstan/phpstan)
 - composer run phpstan
 
+# Version 0.0.39
+- Compatibility with PrestaShop 1.7.4 and higher 
+- Fix CCC - smart cache for JavaScript
+
 # Version 0.0.38
 - add different types of cart (STANDARD, VIRTUAL, MIXED) 
 - payeye/lib up to 1.18.17

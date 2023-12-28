@@ -14,9 +14,9 @@ use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
-use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use PayEye\Lib\Enum\CartType;
+
 
 defined('_PS_VERSION_') || exit;
 
@@ -76,12 +76,20 @@ class PayEyeCartModuleFrontController extends FrontController
         $this->context->cart->id_address_delivery = $deliveryAddress->id;
         $this->context->cart->id_address_invoice = $invoiceAddress->id;
 
+        if (version_compare(_PS_VERSION_, '1.7.5.0', '<')) {
+            $objectPresenterClass = '\PrestaShop\PrestaShop\Adapter\ObjectPresenter';
+            $objectPresenter = new $objectPresenterClass();
+        } else {
+            $objectPresenterClass = '\PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter';
+            $objectPresenter = new $objectPresenterClass();
+        }
+
         $checkoutSessionCore = new CheckoutSessionCore(
             $this->context,
             new DeliveryOptionsFinder(
                 $this->context,
                 $this->context->getTranslator(),
-                new ObjectPresenter(),
+                $objectPresenter,
                 new PriceFormatter()
             )
         );
