@@ -4,5 +4,5 @@
 .idea
 .phpunit.result.cache
 tmp/
-
-auth.json
+/payeye
+payeye.zip

@@ -36,12 +36,6 @@
     "prestashop/php-dev-tools": "^4.3",
     "symfony/var-dumper": "^5.4"
   },
-  "repositories": [
-    {
-      "type": "composer",
-      "url": "https://gitlab.com/api/v4/group/52451105/-/packages/composer/packages.json"
-    }
-  ],
   "require": {
     "ext-http": "*",
     "ext-json": "*",
@@ -64,7 +58,6 @@
       ".env.smaple",
       ".gitignore",
       ".phpunit.result.cache",
-      "config.json",
       "composer.json",
       "composer.lock",
       "movefile.yml",
