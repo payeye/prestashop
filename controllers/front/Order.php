@@ -15,7 +15,6 @@ use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
-use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 
 defined('_PS_VERSION_') || exit;
@@ -116,13 +115,16 @@ class PayEyeOrderModuleFrontController extends FrontController
 
         $order = $this->order;
 
+	 $currencyId = (int) $order->id_currency;
+	 $currency = new Currency($currencyId);
+
         return OrderCreateResponseModel::builder()
             ->setCheckoutUrl($this->checkoutUrl())
             ->setOrderId((string) $order->id)
             ->setTotalAmount($amountService->convertFloatToInteger($order->getOrdersTotalPaid()))
             ->setCartAmount($amountService->convertFloatToInteger($order->total_products_wt))
             ->setShippingAmount($amountService->convertFloatToInteger($order->total_shipping))
-            ->setCurrency(Currency::getIsoCodeById((int) $order->id_currency));
+	        ->setCurrency($currency->iso_code);
     }
 
     private function checkoutUrl(): string
@@ -135,11 +137,20 @@ class PayEyeOrderModuleFrontController extends FrontController
 
     private function currentCart(AmountService $amountService): CartResponseModel
     {
+
+        if (version_compare(_PS_VERSION_, '1.7.5.0', '<')) {
+            $objectPresenterClass = '\PrestaShop\PrestaShop\Adapter\ObjectPresenter';
+            $objectPresenter = new $objectPresenterClass();
+        } else {
+            $objectPresenterClass = '\PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter';
+            $objectPresenter = new $objectPresenterClass();
+        }
+
         $checkoutSessionCore = new CheckoutSessionCore(
             $this->context, new DeliveryOptionsFinder(
                 $this->context,
                 $this->context->getTranslator(),
-                new ObjectPresenter(),
+                $objectPresenter,
                 new PriceFormatter()
             )
         );
@@ -148,12 +159,15 @@ class PayEyeOrderModuleFrontController extends FrontController
         $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
         $cartResponseService = new CartResponseService($cart, $amountService);
 
+	 $currencyId = (int) $cart->id_currency;
+	 $currency = new Currency($currencyId);	
+
         return CartResponseModel::builder()
             ->setPromoCodes($cartResponseService->promoCodes)
             ->setShippingMethods($shippingService->shippingMethods)
             ->setCart($cartResponseService->payeyeCart)
             ->setShippingId((string) $cart->id_carrier)
-            ->setCurrency(Currency::getIsoCodeById((int) $cart->id_currency))
+            ->setCurrency($currency->iso_code)
             ->setProducts($cartResponseService->products);
     }
 

@@ -14,8 +14,9 @@ use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
-use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
+use PayEye\Lib\Enum\CartType;
+
 
 defined('_PS_VERSION_') || exit;
 
@@ -50,7 +51,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $this->exitWithResponse($response->toArray());
         } catch (PayEyePaymentException $exception) {
             $this->exitWithPayEyeExceptionResponse($exception);
-        } catch (Exception|Throwable $exception) {
+        } catch (Exception | Throwable $exception) {
             $this->exitWithExceptionMessage($exception);
         }
     }
@@ -75,11 +76,20 @@ class PayEyeCartModuleFrontController extends FrontController
         $this->context->cart->id_address_delivery = $deliveryAddress->id;
         $this->context->cart->id_address_invoice = $invoiceAddress->id;
 
+        if (version_compare(_PS_VERSION_, '1.7.5.0', '<')) {
+            $objectPresenterClass = '\PrestaShop\PrestaShop\Adapter\ObjectPresenter';
+            $objectPresenter = new $objectPresenterClass();
+        } else {
+            $objectPresenterClass = '\PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter';
+            $objectPresenter = new $objectPresenterClass();
+        }
+
         $checkoutSessionCore = new CheckoutSessionCore(
-            $this->context, new DeliveryOptionsFinder(
+            $this->context,
+            new DeliveryOptionsFinder(
                 $this->context,
                 $this->context->getTranslator(),
-                new ObjectPresenter(),
+                $objectPresenter,
                 new PriceFormatter()
             )
         );
@@ -98,15 +108,38 @@ class PayEyeCartModuleFrontController extends FrontController
         $this->context->cart->secure_key = $customer->secure_key;
         $this->context->cart->save();
 
+        $currencyId = (int) $this->context->cart->id_currency;
+        $currency = new Currency($currencyId);
+
+        $products = $this->context->cart->getProducts();
+        $hasPhysicalProducts = false;
+        $hasVirtualProducts = false;
+        foreach ($products as $product) {
+            if ($product['is_virtual']) {
+                $hasVirtualProducts = true;
+            } else {
+                $hasPhysicalProducts = true;
+            }
+        }
+
+        if ($hasPhysicalProducts && $hasVirtualProducts) {
+            $cartType = CartType::MIXED;
+        } else if ($hasVirtualProducts) {
+            $cartType = CartType::VIRTUAL;
+        } else {
+            $cartType = CartType::STANDARD;
+        }
+
         $cartResponse = CartResponseModel::builder()
             ->setShop($this->getShop())
             ->setPromoCodes($cartResponseService->promoCodes)
             ->setShippingId($shippingId)
             ->setShippingMethods($shippingService->shippingMethods)
             ->setCart($cartResponseService->payeyeCart)
-            ->setCurrency(Currency::getIsoCodeById((int) $this->context->cart->id_currency))
+            ->setCurrency($currency->iso_code)
             ->setProducts($cartResponseService->products)
-            ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE);
+            ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE)
+            ->setCartType($cartType);
 
         $cartResponse->setCartHash($this->calculateCartHash($cartResponse));
 
@@ -151,8 +184,20 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $address->id_customer = $this->context->customer->id;
 
-        $isoCodeForPoland = 'PL';
-        $poland = Country::getByIso($isoCodeForPoland);
+        $shop_country_name = Configuration::get('PS_SHOP_COUNTRY');
+        $countries = Country::getCountries($active = true); // Pobranie wszystkich krajów
+
+        foreach ($countries as $country) {
+            if ($country['name'] === $shop_country_name) {
+                $countryISO = $country['iso_code'];
+                break;
+            }
+        }
+        if (!empty($countryISO)) {
+            $country = Country::getByIso($countryISO);
+        } else {
+            $country = 0;
+        }
 
         if ($shipping) {
             $address->id_country = Country::getByIso($shipping->getAddress()->getCountry());
@@ -168,7 +213,7 @@ class PayEyeCartModuleFrontController extends FrontController
                 $address->phone_mobile = $request->getBilling()->getPhoneNumber();
             }
         } else {
-            $address->id_country = $poland;
+            $address->id_country = $country;
             $address->alias = ' ';
             $address->firstname = ' ';
             $address->lastname = ' ';
@@ -194,8 +239,20 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $address->id_customer = $this->context->customer->id;
 
-        $isoCodeForPoland = 'PL';
-        $poland = Country::getByIso($isoCodeForPoland);
+        $shop_country_name = Configuration::get('PS_SHOP_COUNTRY');
+        $countries = Country::getCountries($active = true); // Pobranie wszystkich krajów
+
+        foreach ($countries as $country) {
+            if ($country['name'] === $shop_country_name) {
+                $countryISO = $country['iso_code'];
+                break;
+            }
+        }
+        if (!empty($countryISO)) {
+            $country = Country::getByIso($countryISO);
+        } else {
+            $country = 0;
+        }
 
         if ($billing) {
             $address->id_country = Country::getByIso($billing->getAddress()->getCountry());
@@ -208,7 +265,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $address->city = $billing->getAddress()->getCity();
             $address->postcode = $billing->getAddress()->getPostCode();
         } else {
-            $address->id_country = $poland;
+            $address->id_country = $country;
             $address->alias = ' ';
             $address->firstname = ' ';
             $address->lastname = ' ';

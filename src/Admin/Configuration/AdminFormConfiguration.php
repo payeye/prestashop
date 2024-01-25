@@ -14,7 +14,7 @@ class AdminFormConfiguration
         $this->module = $module;
     }
 
-    public function authFormType(): array
+    public function authFormType($shop_country_name): array
     {
         return [
             'form' => [
@@ -23,6 +23,12 @@ class AdminFormConfiguration
                     'icon' => 'icon-th',
                 ],
                 'input' => [
+                    ($shop_country_name=="")?[
+                        'type' => 'desc',
+                        'name' => 'error_field',
+                        'label' => '', 
+                        'desc' => '<span style="color:red;font-weight:bold;font-size: 14px;">'.$this->module->l('The store address has not been saved!').'<br></span>'.$this->module->l("Please go to the \"Store parameters\" -> \"Contact\" -> \"Stores\" tab, then in the \"Contact details\" section, complete the \"Country\" field and save the form."),
+                        ]:[],
                     [
                         'type' => 'switch',
                         'label' => $this->module->l('Test Mode'),

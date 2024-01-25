@@ -43,10 +43,10 @@
     }
   ],
   "require": {
+    "ext-http": "*",
     "ext-json": "*",
     "chillerlan/php-qrcode": "^3.4.1",
-    "payeye/lib": "1.18.12",
-    "ext-http": "*"
+    "payeye/lib": "1.18.17"
   },
   "archive": {
     "exclude": [

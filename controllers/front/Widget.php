@@ -25,11 +25,13 @@ class PayEyeWidgetModuleFrontController extends FrontController
 
         $entity = PayEyeCartMapping::findByCartId($cartId);
 
-        if ($entity === null || $this->context->cart->hasProducts() === false) {
+        if ($entity === null || $this->context->cart->nbProducts() <= 0) {
             $this->exitWithResponse($response);
         }
 
         $price = $this->context->cart->getSummaryDetails()['total_price'];
+        $shippingPrice = $this->context->cart->getSummaryDetails()['total_shipping'];
+        $price = $price - $shippingPrice;
         $price = number_format((float) $price, 2, ',', ' ');
 
         $qrCode = new QRCode();
