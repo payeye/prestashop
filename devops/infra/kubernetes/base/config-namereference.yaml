@@ -1,6 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-nameSuffix:
-- path: spec/template/spec/containers/name
-- path: spec/template/spec/containers/env/valueFrom/secretKeyRef/name
