@@ -23,6 +23,7 @@ class HookModuleRoutes
             'module-payeye-widget-status' => $this->registerRouter('WidgetStatus', 'widget/status'),
             'module-payeye-returns' => $this->registerRouter('Return', 'returns'),
             'module-payeye-returns-status' => $this->registerRouter('ReturnStatus', 'returns/status'),
+            'module-payeye-healthcheck' => $this->registerRouter('Healthcheck', 'healthcheck'),
         ];
     }
 

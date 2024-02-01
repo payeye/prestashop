@@ -10,6 +10,9 @@ rm payeye.zip
 zip -r payeye.zip payeye
 ```
 
+### Version 0.0.40
+- Add healthcheck endpoint
+
 ### Version 0.0.39
 - Compatibility with PrestaShop 1.7.4 and higher 
 - Fix CCC - smart cache for JavaScript
