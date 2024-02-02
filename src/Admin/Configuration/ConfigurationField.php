@@ -13,10 +13,12 @@ abstract class ConfigurationField
     public const PUBLIC_KEY = 'PAYEYE_PUBLIC_KEY';
     public const PRIVATE_KEY = 'PAYEYE_PRIVATE_KEY';
     public const WIDGET_UI_BOTTOM = 'PAYEYE_WIDGET_UI_BOTTOM';
+    public const WIDGET_UI_SIDE_POSITION = 'PAYEYE_WIDGET_UI_SIDE_POSITION';
+    public const WIDGET_UI_SIDE = 'PAYEYE_WIDGET_UI_SIDE';
+    public const WIDGET_UI_ZINDEX = 'PAYEYE_WIDGET_UI_ZINDEX';
     public const WIDGET_UI_MOBILE_OPEN = 'PAYEYE_WIDGET_UI_MOBILE_OPEN';
     public const WIDGET_UI_WIDGET_VISIBLE = 'PAYEYE_WIDGET_UI_WIDGET_VISIBLE';
     public const SHIPPING_MATCHING = 'PAYEYE_SHIPPING_MATCHING';
-
     public const PAYMENT_STATUS_WAITING = 'PAYEYE_PAYMENT_STATUS_WAITING';
     public const RETURN_REQUEST = 'PAYEYE_RETURN_REQUEST';
 
@@ -33,7 +35,9 @@ abstract class ConfigurationField
             self::SHIPPING_MATCHING,
             self::WIDGET_UI_BOTTOM,
             self::WIDGET_UI_MOBILE_OPEN,
-            self::WIDGET_UI_WIDGET_VISIBLE
+            self::WIDGET_UI_SIDE_POSITION,
+            self::WIDGET_UI_SIDE,
+            self::WIDGET_UI_ZINDEX,
         ];
     }
 }

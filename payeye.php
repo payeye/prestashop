@@ -45,7 +45,7 @@ class PayEye extends PaymentModule
     {
         $this->name = 'payeye';
         $this->tab = 'payments_gateways';
-        $this->version = '0.0.39';
+        $this->version = '0.1.0';
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
         $this->controllers = ['Cart', 'Order', 'OrderUpdate', 'Widget', 'Return'];
@@ -73,11 +73,15 @@ class PayEye extends PaymentModule
             (int) Configuration::get('PS_OS_ERROR'),
             (int) Configuration::get(ConfigurationField::RETURN_REQUEST)
         );
-        $this->widgetUI = new WidgetUI(
-            (int) Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM),
-            (bool) Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN),
-            (bool) Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE)
-        );
+        $this->widgetUI = new WidgetUI();
+        $this->widgetUI
+            ->setBottom((int) Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM))
+            ->setMobileOpen((bool) Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN))
+            ->setWidgetVisible((bool) Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE))
+            ->setSide((string) Configuration::get(ConfigurationField::WIDGET_UI_SIDE))
+            ->setSidePosition((int) Configuration::get(ConfigurationField::WIDGET_UI_SIDE_POSITION))
+            ->setZIndex((int) Configuration::get(ConfigurationField::WIDGET_UI_ZINDEX))
+        ;
         $this->testMode = (bool) Configuration::get(ConfigurationField::TEST_MODE);
     }
 
@@ -97,7 +101,6 @@ class PayEye extends PaymentModule
             && $this->registerHook('adminOrder')
             && $this->registerHook('actionPayEyeApiBeforeCreateOrder');
     }
-
 
     private function isPrestaShop178OrLater(): bool
     {
@@ -123,7 +126,6 @@ class PayEye extends PaymentModule
             //            Tools::redirect($url);
         }
 
-
         $this->context->controller->registerJavascript(
             'payeye',
             $this->getPathUri() . 'views/js/script.js',
@@ -143,12 +145,15 @@ class PayEye extends PaymentModule
 
         Media::addJsDef([
             'payeye' => [
+                'side' => $this->widgetUI->getSide(),
                 'platform' => 'PRESTASHOP',
                 'apiUrl' => $this->context->shop->getBaseURL(true) . 'module-payeye/v1',
                 'ui' => [
                     'position' => [
                         'bottom' => $this->widgetUI->getBottom() . 'px',
+                        'side' => $this->widgetUI->getSidePosition() . 'px',
                     ],
+                    'zIndex' => $this->widgetUI->getZIndex(),
                     'mobile' => [
                         'open' => $this->widgetUI->getMobileOpen(),
                     ],
@@ -184,6 +189,9 @@ class PayEye extends PaymentModule
                 $orderStateService->addOrderState(ConfigurationField::RETURN_REQUEST, OrderStatesTranslations::RETURN_REQUEST, true)
             )
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_BOTTOM, 20)
+            && Configuration::updateValue(ConfigurationField::WIDGET_UI_SIDE_POSITION, 20)
+            && Configuration::updateValue(ConfigurationField::WIDGET_UI_SIDE, 'right')
+            && Configuration::updateValue(ConfigurationField::WIDGET_UI_ZINDEX, 99998)
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, 0)
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE, 1)
             && Configuration::updateValue(ConfigurationField::TEST_MODE, 1);
@@ -199,11 +207,20 @@ class PayEye extends PaymentModule
             $publicKey = (string) Tools::getValue(ConfigurationField::PUBLIC_KEY);
             $privateKey = (string) Tools::getValue(ConfigurationField::PRIVATE_KEY);
             $widgetUiBottom = (int) Tools::getValue(ConfigurationField::WIDGET_UI_BOTTOM);
+            $widgetUiSidePosition = (int) Tools::getValue(ConfigurationField::WIDGET_UI_SIDE_POSITION);
+            $widgetUiSide = (string) Tools::getValue(ConfigurationField::WIDGET_UI_SIDE);
+            $widgetUiZIndex = (int) Tools::getValue(ConfigurationField::WIDGET_UI_ZINDEX);
             $widgetUiMobileOpen = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN);
             $widgetVisible = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE);
 
-            if ($widgetUiBottom === 0 || $widgetUiBottom < 0) {
+            if ($widgetUiBottom < 0) {
                 $widgetUiBottom = 20;
+            }
+            if ($widgetUiSidePosition < 0) {
+                $widgetUiSidePosition = 20;
+            }
+            if ($widgetUiZIndex < 0) {
+                $widgetUiZIndex = 99998;
             }
 
             if (
@@ -212,6 +229,9 @@ class PayEye extends PaymentModule
                 && Configuration::updateValue(ConfigurationField::PUBLIC_KEY, $publicKey)
                 && Configuration::updateValue(ConfigurationField::PRIVATE_KEY, $privateKey)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_BOTTOM, $widgetUiBottom)
+                && Configuration::updateValue(ConfigurationField::WIDGET_UI_SIDE_POSITION, $widgetUiSidePosition)
+                && Configuration::updateValue(ConfigurationField::WIDGET_UI_SIDE, $widgetUiSide)
+                && Configuration::updateValue(ConfigurationField::WIDGET_UI_ZINDEX, $widgetUiZIndex)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, $widgetUiMobileOpen)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE, $widgetVisible)
                 && Configuration::updateValue(ConfigurationField::SHIPPING_MATCHING, HandleConfiguration::handleMatching(Tools::getAllValues())) // ten update nie działa chyba ze działa ale front to źle wyświetla
@@ -278,6 +298,9 @@ class PayEye extends PaymentModule
             $this->getConfigFieldsValuesForCarrierMatching($matchShipping),
             [
                 ConfigurationField::WIDGET_UI_BOTTOM => Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM),
+                ConfigurationField::WIDGET_UI_SIDE_POSITION => Configuration::get(ConfigurationField::WIDGET_UI_SIDE_POSITION),
+                ConfigurationField::WIDGET_UI_SIDE => Configuration::get(ConfigurationField::WIDGET_UI_SIDE),
+                ConfigurationField::WIDGET_UI_ZINDEX => Configuration::get(ConfigurationField::WIDGET_UI_ZINDEX),
                 ConfigurationField::WIDGET_UI_MOBILE_OPEN => Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN),
                 ConfigurationField::WIDGET_UI_WIDGET_VISIBLE => Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE),
             ]
@@ -303,12 +326,12 @@ class PayEye extends PaymentModule
 
     public function hookActionCartUpdateQuantityBefore(array $payload): void
     {
-            (new HookActionCartSave($this))($payload);
+        (new HookActionCartSave($this))($payload);
     }
 
     public function hookActionBeforeCartUpdateQty(array $payload): void
     {
-            (new HookActionCartSave($this))($payload);
+        (new HookActionCartSave($this))($payload);
     }
 
     public function hookActionObjectProductInCartDeleteAfter(array $payload): void
@@ -343,7 +366,6 @@ class PayEye extends PaymentModule
         $carrier = [];
         foreach ($carrierMatching as $item) {
             foreach ($matchedShippingProviders as $value) {
-
                 if ($value['carrierId'] == $item['carrierId']) {
                     $carrier[$item['name']] = $value['provider'];
                 }

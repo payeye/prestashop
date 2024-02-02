@@ -23,12 +23,12 @@ class AdminFormConfiguration
                     'icon' => 'icon-th',
                 ],
                 'input' => [
-                    ($shop_country_name=="")?[
+                    ($shop_country_name == '') ? [
                         'type' => 'desc',
                         'name' => 'error_field',
-                        'label' => '', 
-                        'desc' => '<span style="color:red;font-weight:bold;font-size: 14px;">'.$this->module->l('The store address has not been saved!').'<br></span>'.$this->module->l("Please go to the \"Store parameters\" -> \"Contact\" -> \"Stores\" tab, then in the \"Contact details\" section, complete the \"Country\" field and save the form."),
-                        ]:[],
+                        'label' => '',
+                        'desc' => '<span style="color:red;font-weight:bold;font-size: 14px;">' . $this->module->l('The store address has not been saved!') . '<br></span>' . $this->module->l('Please go to the "Store parameters" -> "Contact" -> "Stores" tab, then in the "Contact details" section, complete the "Country" field and save the form.'),
+                        ] : [],
                     [
                         'type' => 'switch',
                         'label' => $this->module->l('Test Mode'),
@@ -116,10 +116,41 @@ class AdminFormConfiguration
                         ],
                     ],
                     [
+                        'type' => 'select',
+                        'label' => $this->module->l('Widget side'),
+                        'desc' => $this->module->l('Where is widget placed on left or right side'),
+                        'name' => ConfigurationField::WIDGET_UI_SIDE,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => 'LEFT',   // The value of the 'value' attribute of the <option> tag.
+                                    'name' => $this->module->l('Left'),  // The text inside the <option> tag.
+                                ],
+                                [
+                                    'id_option' => 'RIGHT',
+                                    'name' => $this->module->l('Right'),
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
+                    [
                         'type' => 'text',
                         'label' => $this->module->l('Widget bottom position'),
                         'desc' => $this->module->l('Distance from the bottom screen (unit px). Default 20.'),
                         'name' => ConfigurationField::WIDGET_UI_BOTTOM,
+                    ],
+                    [
+                        'type' => 'text',
+                        'label' => $this->module->l('Widget side position'),
+                        'desc' => $this->module->l('Distance from the side screen (unit px). Default 20.'),
+                        'name' => ConfigurationField::WIDGET_UI_SIDE_POSITION,
+                    ],
+                    [
+                        'type' => 'text',
+                        'label' => $this->module->l('Widget z index'),
+                        'name' => ConfigurationField::WIDGET_UI_ZINDEX,
                     ],
                     [
                         'type' => 'switch',

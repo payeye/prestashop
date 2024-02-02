@@ -54,7 +54,7 @@ class HookActionCartSave
             $cartMapping->uuid = Uuid::generate();
 
             $cartMapping->add();
-        } catch (\PrestaShopDatabaseException | \PrestaShopException | HttpException $e) {
+        } catch (\PrestaShopDatabaseException|\PrestaShopException|HttpException $e) {
             // do nothing
         }
     }

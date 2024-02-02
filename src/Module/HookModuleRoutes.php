@@ -31,7 +31,7 @@ class HookModuleRoutes
     {
         return [
             'controller' => $controller,
-            'rule' => 'module-payeye/v1' . '/' . $path,
+            'rule' => 'module-payeye/v1/' . $path,
             'keywords' => [],
             'params' => [
                 'fc' => 'module',
