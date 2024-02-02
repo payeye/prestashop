@@ -2,6 +2,7 @@
 
 namespace PrestaShop\Module\PayEye\Cart\Services;
 
+use Address as PrestaShopAddress;
 use PayEye\Lib\Enum\PromoCodeType;
 use PayEye\Lib\Model\Cart as PayEyeCart;
 use PayEye\Lib\Model\Product;
@@ -9,7 +10,6 @@ use PayEye\Lib\Model\ProductAttribute;
 use PayEye\Lib\Model\ProductImages;
 use PayEye\Lib\Model\PromoCode;
 use PayEye\Lib\Service\AmountService;
-use \Address as PrestaShopAddress;
 
 class CartResponseService
 {
@@ -48,7 +48,7 @@ class CartResponseService
     {
         return $this->amountService->convertFloatToInteger($this->cart->getSummaryDetails()['total_price']);
     }
-    
+
     public function getProductPrice(): int
     {
         return $this->amountService->convertFloatToInteger($this->cart->getSummaryDetails()['total_products_wt']);
@@ -68,11 +68,11 @@ class CartResponseService
     {
         $deliveryAddressId = $this->cart->id_address_delivery;
         $deliveryAddress = new PrestaShopAddress($deliveryAddressId);
-        
-        if($deliveryAddress->city == ' '){
+
+        if ($deliveryAddress->city == ' ') {
             $total = $this->getProductPrice() - $this->getDiscount();
             $regularTotal = $this->regularProductsTotal;
-        }else{
+        } else {
             $total = $this->getProductPrice() + $this->getShippingAmount() - $this->getDiscount();
             $regularTotal = $this->regularProductsTotal + $this->getShippingAmount();
         }
@@ -168,8 +168,6 @@ class CartResponseService
         $attributeClass = $this->isPrestaShop8OrLater() ? '\ProductAttribute' : '\Attribute';
 
         foreach ($attributesName as $value) {
-
-            
             $id = $value['id_attribute'];
             $attribute = new $attributeClass($id, $this->cart->id_lang);
             $group = new \AttributeGroup($attribute->id_attribute_group, $this->cart->id_lang);
@@ -187,5 +185,4 @@ class CartResponseService
     {
         return version_compare(_PS_VERSION_, '8.0.0', '>=');
     }
-
 }

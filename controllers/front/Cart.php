@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use PayEye\Lib\Cart\CartRequestModel;
 use PayEye\Lib\Cart\CartResponseModel;
+use PayEye\Lib\Enum\CartType;
 use PayEye\Lib\Enum\SignatureFrom;
 use PayEye\Lib\Exception\CartNotFoundException;
 use PayEye\Lib\Exception\PayEyePaymentException;
@@ -15,8 +16,6 @@ use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
-use PayEye\Lib\Enum\CartType;
-
 
 defined('_PS_VERSION_') || exit;
 
@@ -51,7 +50,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $this->exitWithResponse($response->toArray());
         } catch (PayEyePaymentException $exception) {
             $this->exitWithPayEyeExceptionResponse($exception);
-        } catch (Exception | Throwable $exception) {
+        } catch (Exception|Throwable $exception) {
             $this->exitWithExceptionMessage($exception);
         }
     }
@@ -124,7 +123,7 @@ class PayEyeCartModuleFrontController extends FrontController
 
         if ($hasPhysicalProducts && $hasVirtualProducts) {
             $cartType = CartType::MIXED;
-        } else if ($hasVirtualProducts) {
+        } elseif ($hasVirtualProducts) {
             $cartType = CartType::VIRTUAL;
         } else {
             $cartType = CartType::STANDARD;

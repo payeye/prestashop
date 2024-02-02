@@ -115,8 +115,8 @@ class PayEyeOrderModuleFrontController extends FrontController
 
         $order = $this->order;
 
-	 $currencyId = (int) $order->id_currency;
-	 $currency = new Currency($currencyId);
+        $currencyId = (int) $order->id_currency;
+        $currency = new Currency($currencyId);
 
         return OrderCreateResponseModel::builder()
             ->setCheckoutUrl($this->checkoutUrl())
@@ -124,7 +124,7 @@ class PayEyeOrderModuleFrontController extends FrontController
             ->setTotalAmount($amountService->convertFloatToInteger($order->getOrdersTotalPaid()))
             ->setCartAmount($amountService->convertFloatToInteger($order->total_products_wt))
             ->setShippingAmount($amountService->convertFloatToInteger($order->total_shipping))
-	        ->setCurrency($currency->iso_code);
+            ->setCurrency($currency->iso_code);
     }
 
     private function checkoutUrl(): string
@@ -137,7 +137,6 @@ class PayEyeOrderModuleFrontController extends FrontController
 
     private function currentCart(AmountService $amountService): CartResponseModel
     {
-
         if (version_compare(_PS_VERSION_, '1.7.5.0', '<')) {
             $objectPresenterClass = '\PrestaShop\PrestaShop\Adapter\ObjectPresenter';
             $objectPresenter = new $objectPresenterClass();
@@ -159,8 +158,8 @@ class PayEyeOrderModuleFrontController extends FrontController
         $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
         $cartResponseService = new CartResponseService($cart, $amountService);
 
-	 $currencyId = (int) $cart->id_currency;
-	 $currency = new Currency($currencyId);	
+        $currencyId = (int) $cart->id_currency;
+        $currency = new Currency($currencyId);
 
         return CartResponseModel::builder()
             ->setPromoCodes($cartResponseService->promoCodes)
