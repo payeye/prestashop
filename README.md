@@ -13,11 +13,11 @@ zip -r payeye.zip payeye
 ### How to find bugs in codebase (https://github.com/phpstan/phpstan)
 - composer run phpstan
 
-# Version 0.1.0-RC
+### Version 0.1.0-RC
 - Add widget positioning
 - Add healthcheck endpoint
 
-# Version 0.0.39
+### Version 0.0.39
 - Compatibility with PrestaShop 1.7.4 and higher 
 - Fix CCC - smart cache for JavaScript
 
