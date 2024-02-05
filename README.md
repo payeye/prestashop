@@ -9,12 +9,13 @@ unzip payeye.zip -d payeye
 rm payeye.zip
 zip -r payeye.zip payeye
 ```
-### Version 0.1.0
+
+### How to find bugs in codebase (https://github.com/phpstan/phpstan)
+- composer run phpstan
+
+# Version 0.1.0-RC
 - Add widget positioning
 - Add healthcheck endpoint
-
-Run PHPStan - PHP Static Analysis Tool (https://github.com/phpstan/phpstan)
-- composer run phpstan
 
 # Version 0.0.39
 - Compatibility with PrestaShop 1.7.4 and higher 
