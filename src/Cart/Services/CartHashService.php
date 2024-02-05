@@ -20,7 +20,7 @@ class CartHashService
 
     public function calculateCartHash(CartResponseModel $cart): string
     {
-        return (new HashService($this->authConfig))->cartHash(
+        return (HashService::create($this->authConfig))->cartHash(
             $cart->promoCodes,
             $cart->shippingMethods,
             $cart->cart,

@@ -40,7 +40,7 @@
     "ext-http": "*",
     "ext-json": "*",
     "chillerlan/php-qrcode": "^3.4.1",
-    "payeye/lib": "1.18.17"
+    "payeye/lib": "1.19.2"
   },
   "archive": {
     "exclude": [

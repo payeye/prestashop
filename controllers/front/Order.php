@@ -10,6 +10,7 @@ use PayEye\Lib\Exception\OrderPriceNotMatchedException;
 use PayEye\Lib\Exception\PayEyePaymentException;
 use PayEye\Lib\Order\OrderCreateRequestModel;
 use PayEye\Lib\Order\OrderCreateResponseModel;
+use PayEye\Lib\Service\AddressService;
 use PayEye\Lib\Service\AmountService;
 use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
@@ -35,7 +36,7 @@ class PayEyeOrderModuleFrontController extends FrontController
             $handleRequest = $this->getRequest();
             $this->checkPermission($handleRequest);
 
-            $request = new OrderCreateRequestModel($handleRequest);
+            $request = OrderCreateRequestModel::createFromArray($handleRequest);
 
             $cartMapping = PayEyeCartMapping::findByCartUuid($request->getCartId());
             if ($cartMapping === null) {
@@ -52,14 +53,17 @@ class PayEyeOrderModuleFrontController extends FrontController
                 throw new CartContentNotMatchedException();
             }
 
+            $addressService = AddressService::create($request->getShipping()->getAddress());
+            $addressService->build();
+
             $address = new Address($this->context->cart->id_address_delivery);
-            $address->address1 = $request->getShipping()->getAddress()->getFirstLine();
+            $address->address1 = $addressService->getFirstLine();
             $address->city = $request->getShipping()->getAddress()->getCity();
             $address->postcode = $request->getShipping()->getAddress()->getPostCode();
 
             if ($request->getShipping()->getPickupPoint()) {
                 $address->address1 = $request->getShipping()->getPickupPoint()->getName();
-                $address->address2 = $request->getShipping()->getAddress()->getFirstLine();
+                $address->address2 = $addressService->getFirstLine();
             }
             $address->save();
 
