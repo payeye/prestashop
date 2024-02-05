@@ -66,14 +66,14 @@ class HookActionCartSave
     {
         $httpClient = new PayEyeHttpClient($this->module->config);
 
-        $request = new RefreshCartRequest(
+        $request = RefreshCartRequest::create(
             $cartMapping->uuid,
             $this->module->authConfig->getShopId(),
             EvenType::CART_CHANGED
         );
 
-        $auth = new AuthService(
-            new HashService($this->module->authConfig),
+        $auth = AuthService::create(
+            HashService::create($this->module->authConfig),
             SignatureFrom::REFRESH_CART_REQUEST,
             $request->toArray()
         );

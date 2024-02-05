@@ -79,8 +79,8 @@ class AdminAjaxReturnController extends AdminController
                 ->setStatus(ReturnStatus::ACCEPTED)
                 ->setAmount($amountService->convertFloatToInteger((float) $amount));
 
-            $auth = new AuthService(
-                new HashService($this->module->authConfig),
+            $auth = AuthService::create(
+                HashService::create($this->module->authConfig),
                 SignatureFrom::RETURN_STATUS_REQUEST,
                 $return->toArray()
             );

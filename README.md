@@ -14,8 +14,9 @@ zip -r payeye.zip payeye
 - composer run phpstan
 
 ### Version 0.1.0-RC
-- Add widget positioning
-- Add healthcheck endpoint
+- Added positioning of the widget
+- Added healthcheck endpoint
+- Upgraded payeye/lib to the latest version.
 
 ### Version 0.0.39
 - Compatibility with PrestaShop 1.7.4 and higher 

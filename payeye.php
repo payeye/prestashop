@@ -60,7 +60,7 @@ class PayEye extends PaymentModule
         $this->displayName = $this->l('e-payeye payments');
         $this->description = $this->l('With just one click, you can pay securely online for your purchases.');
 
-        $this->authConfig = new AuthConfig(
+        $this->authConfig = AuthConfig::create(
             Configuration::get(ConfigurationField::SHOP_ID),
             Configuration::get(ConfigurationField::PUBLIC_KEY),
             Configuration::get(ConfigurationField::PRIVATE_KEY)

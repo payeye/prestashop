@@ -99,8 +99,8 @@ class FrontController extends \ModuleFrontController
 
     private function getSignatureFromPayload(array $payload): string
     {
-        $auth = new AuthService(
-            new HashService($this->module->authConfig),
+        $auth = AuthService::create(
+            HashService::create($this->module->authConfig),
             $payload['signatureFrom'],
             $payload
         );
@@ -112,8 +112,8 @@ class FrontController extends \ModuleFrontController
     {
         $authRequestModel = AuthRequest::createFromArray($request);
 
-        $authService = new AuthService(
-            new HashService($this->module->authConfig),
+        $authService = AuthService::create(
+            HashService::create($this->module->authConfig),
             $authRequestModel->getSignatureFrom(),
             $request
         );

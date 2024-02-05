@@ -9,6 +9,7 @@ use PayEye\Lib\Enum\SignatureFrom;
 use PayEye\Lib\Exception\CartNotFoundException;
 use PayEye\Lib\Exception\PayEyePaymentException;
 use PayEye\Lib\Model\Shop as PayEyeShop;
+use PayEye\Lib\Service\AddressService;
 use PayEye\Lib\Service\AmountService;
 use PayEye\Lib\Tool\Uuid;
 use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
@@ -30,7 +31,7 @@ class PayEyeCartModuleFrontController extends FrontController
             $handleRequest = $this->getRequest();
             $this->checkPermission($handleRequest);
 
-            $request = new CartRequestModel($handleRequest);
+            $request = CartRequestModel::createFromArray($handleRequest);
 
             $entityCartMapping = PayEyeCartMapping::findByCartUuid($request->getCartId());
 
@@ -198,12 +199,15 @@ class PayEyeCartModuleFrontController extends FrontController
             $country = 0;
         }
 
+        $addressService = AddressService::create($shipping->getAddress());
+        $addressService->build();
+
         if ($shipping) {
             $address->id_country = Country::getByIso($shipping->getAddress()->getCountry());
             $address->alias = $shipping->getLabel();
             $address->firstname = $shipping->getFirstName();
             $address->lastname = $shipping->getLastName();
-            $address->address1 = $shipping->getAddress()->getFirstLine();
+            $address->address1 = $addressService->getFirstLine();
             $address->city = $shipping->getAddress()->getCity();
             $address->postcode = $shipping->getAddress()->getPostCode();
 
@@ -253,6 +257,9 @@ class PayEyeCartModuleFrontController extends FrontController
             $country = 0;
         }
 
+        $addressService = AddressService::create($billing->getAddress());
+        $addressService->build();
+
         if ($billing) {
             $address->id_country = Country::getByIso($billing->getAddress()->getCountry());
             $address->alias = ' ';
@@ -260,7 +267,7 @@ class PayEyeCartModuleFrontController extends FrontController
             // $address->vat_number = ' ';
             $address->firstname = $billing->getFirstName();
             $address->lastname = $billing->getLastName();
-            $address->address1 = $billing->getAddress()->getFirstLine();
+            $address->address1 = $addressService->getFirstLine();
             $address->city = $billing->getAddress()->getCity();
             $address->postcode = $billing->getAddress()->getPostCode();
         } else {
