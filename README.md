@@ -16,7 +16,8 @@ zip -r payeye.zip payeye
 ### Version 0.1.0-RC
 - Added positioning of the widget
 - Added healthcheck endpoint
-- Upgraded payeye/lib to the latest version.
+- Upgraded payeye/lib to the latest version
+- Added compatibility with Prestashop 1.7.5
 
 ### Version 0.0.39
 - Compatibility with PrestaShop 1.7.4 and higher 

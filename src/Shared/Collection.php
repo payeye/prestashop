@@ -35,7 +35,7 @@ class Collection
         });
 
         if ($this->array) {
-            if (version_compare(_PS_VERSION_, '1.7.5.0', '<')) {
+            if (version_compare(_PS_VERSION_, '1.7.6', '<')) {
                 $keys = array_keys($this->array);
                 $firstKey = reset($keys);
                 $this->array = $this->array[$firstKey];
