@@ -44,7 +44,7 @@ class ShippingService
             return $current->cost > $next->cost;
         });
 
-        if (version_compare(_PS_VERSION_, '1.7.5.0', '<')) {
+        if (version_compare(_PS_VERSION_, '1.7.6', '<')) {
             $keys = array_keys($shipping);
             $firstKey = reset($keys);
 
