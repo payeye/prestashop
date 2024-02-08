@@ -4,6 +4,7 @@ namespace PrestaShop\Module\PayEye\Cart\Services;
 
 use Address as PrestaShopAddress;
 use PayEye\Lib\Enum\PromoCodeType;
+use PayEye\Lib\Exception\CartEmptyException;
 use PayEye\Lib\Model\Cart as PayEyeCart;
 use PayEye\Lib\Model\Product;
 use PayEye\Lib\Model\ProductAttribute;
@@ -76,13 +77,15 @@ class CartResponseService
             $total = $this->getProductPrice() + $this->getShippingAmount() - $this->getDiscount();
             $regularTotal = $this->regularProductsTotal + $this->getShippingAmount();
         }
-
+        if(count($this->cart->getProducts()) == 0) {
+            throw new CartEmptyException();
+        };
         return PayEyeCart::builder()
-            ->setTotal($total)
-            ->setRegularTotal($regularTotal)
-            ->setDiscount($this->getDiscount())
-            ->setProducts($this->productsTotal)
-            ->setRegularProducts($this->regularProductsTotal);
+            ->setTotal($total ?? 0)
+            ->setRegularTotal($regularTotal ?? 0)
+            ->setDiscount($this->getDiscount() ?? 0)
+            ->setProducts($this->productsTotal ?? 0)
+            ->setRegularProducts($this->regularProductsTotal ?? 0);
     }
 
     /**
