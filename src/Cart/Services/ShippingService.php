@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace PrestaShop\Module\PayEye\Cart\Services;
 
+use PayEye\Lib\Enum\CartType;
 use PayEye\Lib\Model\ShippingMethod;
 use PayEye\Lib\Service\AmountService;
 
 class ShippingService
 {
     /** @var ShippingMethod[] */
-    public $shippingMethods = [];
+    protected $shippingMethods = [];
 
     /** @var array */
     private $deliveryOptions;
@@ -21,11 +22,15 @@ class ShippingService
     /** @var \PayEye */
     private $payeye;
 
-    public function __construct(array $deliveryOptions, AmountService $amountService, \PayEye $payEye)
+    /** @var CartService */
+    private $cartService;
+
+    public function __construct(array $deliveryOptions, AmountService $amountService, \PayEye $payEye, CartService $cartService)
     {
         $this->deliveryOptions = $deliveryOptions;
         $this->amountService = $amountService;
         $this->payeye = $payEye;
+        $this->cartService = $cartService;
 
         $this->availableShippingMethods();
     }
@@ -37,6 +42,10 @@ class ShippingService
         });
 
         if (!$shipping) {
+            return null;
+        }
+
+        if ($this->cartService->getCartType() == CartType::VIRTUAL) {
             return null;
         }
 
@@ -56,6 +65,10 @@ class ShippingService
 
     private function availableShippingMethods(): void
     {
+        if ($this->cartService->getCartType() === CartType::VIRTUAL) {
+            $this->shippingMethods = [];
+            return;
+        }
         $shippingMatchCollection = $this->payeye->shippingMatchCollection;
 
         foreach ($this->deliveryOptions as $deliveryOption) {
@@ -98,5 +111,9 @@ class ShippingService
         }
 
         return $free;
+    }
+    public function getShippingMethods(): array
+    {
+        return $this->shippingMethods;
     }
 }

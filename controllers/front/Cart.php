@@ -14,6 +14,7 @@ use PayEye\Lib\Service\AmountService;
 use PayEye\Lib\Tool\Uuid;
 use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
+use PrestaShop\Module\PayEye\Cart\Services\CartService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
@@ -96,9 +97,9 @@ class PayEyeCartModuleFrontController extends FrontController
 
         $checkoutSessionCore->setIdAddressDelivery($deliveryAddress->id);
 
-        $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
+        $cartService = new CartService($this->context->cart);
+        $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module, $cartService);
         $shippingId = $this->getShippingId($shippingService, $request);
-
         $this->context->cart->setDeliveryOption([
             $deliveryAddress->id => $shippingId . ',',
         ]);
@@ -111,35 +112,16 @@ class PayEyeCartModuleFrontController extends FrontController
         $currencyId = (int) $this->context->cart->id_currency;
         $currency = new Currency($currencyId);
 
-        $products = $this->context->cart->getProducts();
-        $hasPhysicalProducts = false;
-        $hasVirtualProducts = false;
-        foreach ($products as $product) {
-            if ($product['is_virtual']) {
-                $hasVirtualProducts = true;
-            } else {
-                $hasPhysicalProducts = true;
-            }
-        }
-
-        if ($hasPhysicalProducts && $hasVirtualProducts) {
-            $cartType = CartType::MIXED;
-        } elseif ($hasVirtualProducts) {
-            $cartType = CartType::VIRTUAL;
-        } else {
-            $cartType = CartType::STANDARD;
-        }
-
         $cartResponse = CartResponseModel::builder()
             ->setShop($this->getShop())
             ->setPromoCodes($cartResponseService->promoCodes)
             ->setShippingId($shippingId)
-            ->setShippingMethods($shippingService->shippingMethods)
+            ->setShippingMethods($shippingService->getShippingMethods())
             ->setCart($cartResponseService->payeyeCart)
             ->setCurrency($currency->iso_code)
             ->setProducts($cartResponseService->products)
             ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE)
-            ->setCartType($cartType);
+            ->setCartType($cartService->getCartType());
 
         $cartResponse->setCartHash($this->calculateCartHash($cartResponse));
 
@@ -299,11 +281,11 @@ class PayEyeCartModuleFrontController extends FrontController
 
     private function getShippingId(ShippingService $shippingService, CartRequestModel $cartRequestModel): ?string
     {
-        if (empty($shippingService->shippingMethods)) {
+        if (empty($shippingService->getShippingMethods())) {
             return null;
         }
 
-        $shipping = array_filter($shippingService->shippingMethods, static function ($shipping) use ($cartRequestModel) {
+        $shipping = array_filter($shippingService->getShippingMethods(), static function ($shipping) use ($cartRequestModel) {
             return $shipping->id === $cartRequestModel->getShippingId();
         });
 

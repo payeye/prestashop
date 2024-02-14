@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use PayEye\Lib\Cart\CartResponseModel;
+use PayEye\Lib\Enum\CartType;
 use PayEye\Lib\Exception\CartContentNotMatchedException;
 use PayEye\Lib\Exception\CartNotFoundException;
 use PayEye\Lib\Exception\OrderAlreadyExistsException;
@@ -14,6 +15,7 @@ use PayEye\Lib\Service\AddressService;
 use PayEye\Lib\Service\AmountService;
 use PrestaShop\Module\PayEye\Cart\Services\CartHashService;
 use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
+use PrestaShop\Module\PayEye\Cart\Services\CartService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
@@ -159,17 +161,19 @@ class PayEyeOrderModuleFrontController extends FrontController
         );
 
         $cart = $this->context->cart;
-        $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module);
+        $cartService = new CartService($cart);
+        $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module, $cartService);
         $cartResponseService = new CartResponseService($cart, $amountService);
+        $shippingId = $cartService->getCartType() !== CartType::VIRTUAL ? $cart->id_carrier : null;
 
         $currencyId = (int) $cart->id_currency;
         $currency = new Currency($currencyId);
 
         return CartResponseModel::builder()
             ->setPromoCodes($cartResponseService->promoCodes)
-            ->setShippingMethods($shippingService->shippingMethods)
+            ->setShippingMethods($shippingService->getShippingMethods())
             ->setCart($cartResponseService->payeyeCart)
-            ->setShippingId((string) $cart->id_carrier)
+            ->setShippingId($shippingId)
             ->setCurrency($currency->iso_code)
             ->setProducts($cartResponseService->products);
     }
