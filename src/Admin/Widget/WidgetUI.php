@@ -76,7 +76,7 @@ class WidgetUI
 
     public function setSide($side): self
     {
-        $allowedValues = ['left', 'right'];
+        $allowedValues = ['LEFT', 'RIGHT'];
         $side = (in_array($side, $allowedValues)) ? $side : reset($allowedValues);
         $this->side = $side;
 
