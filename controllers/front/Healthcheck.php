@@ -10,6 +10,6 @@ class PayEyeHealthcheckModuleFrontController extends FrontController
 {
     public function postProcess()
     {
-        $this->exitWithResponse(['status' => 'Up']);
+        $this->exitWithResponse(['status' => 'OK']);
     }
 }
