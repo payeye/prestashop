@@ -8,6 +8,7 @@ use PayEye\Lib\Enum\CartType;
 use PayEye\Lib\Enum\SignatureFrom;
 use PayEye\Lib\Exception\CartNotFoundException;
 use PayEye\Lib\Exception\PayEyePaymentException;
+use PayEye\Lib\Model\Shipping;
 use PayEye\Lib\Model\Shop as PayEyeShop;
 use PayEye\Lib\Service\AddressService;
 use PayEye\Lib\Service\AmountService;
@@ -109,7 +110,7 @@ class PayEyeCartModuleFrontController extends FrontController
         $this->context->cart->secure_key = $customer->secure_key;
         $this->context->cart->save();
 
-        $currencyId = (int) $this->context->cart->id_currency;
+        $currencyId = (int)$this->context->cart->id_currency;
         $currency = new Currency($currencyId);
 
         $cartResponse = CartResponseModel::builder()
@@ -161,14 +162,12 @@ class PayEyeCartModuleFrontController extends FrontController
      */
     private function createDeliveryAddress(CartRequestModel $request): Address
     {
-        $address = new Address($this->context->cart->id_address_delivery);
         $shipping = $request->getShipping();
 
+        $address = new Address($this->context->cart->id_address_delivery);
         $address->id_customer = $this->context->customer->id;
-
         $shop_country_name = Configuration::get('PS_SHOP_COUNTRY');
         $countries = Country::getCountries($active = true); // Pobranie wszystkich krajów
-
         foreach ($countries as $country) {
             if ($country['name'] === $shop_country_name) {
                 $countryISO = $country['iso_code'];
@@ -181,10 +180,9 @@ class PayEyeCartModuleFrontController extends FrontController
             $country = 0;
         }
 
-        $addressService = AddressService::create($shipping->getAddress());
-        $addressService->build();
-
         if ($shipping) {
+            $addressService = AddressService::create($shipping->getAddress());
+            $addressService->build();
             $address->id_country = Country::getByIso($shipping->getAddress()->getCountry());
             $address->alias = $shipping->getLabel();
             $address->firstname = $shipping->getFirstName();
@@ -239,10 +237,10 @@ class PayEyeCartModuleFrontController extends FrontController
             $country = 0;
         }
 
-        $addressService = AddressService::create($billing->getAddress());
-        $addressService->build();
 
         if ($billing) {
+            $addressService = AddressService::create($billing->getAddress());
+            $addressService->build();
             $address->id_country = Country::getByIso($billing->getAddress()->getCountry());
             $address->alias = ' ';
             // $address->dni = ' ';
