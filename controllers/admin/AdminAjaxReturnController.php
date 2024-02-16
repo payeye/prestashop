@@ -61,7 +61,7 @@ class AdminAjaxReturnController extends AdminController
     public function ajaxProcessDoReturn(): void
     {
         $amountService = new AmountService();
-        $client = new PayEyeHttpClient($this->module->config);
+        $client = PayEyeHttpClient::create($this->module->config);
 
         try {
             $returnId = Tools::getValue('returnId');
