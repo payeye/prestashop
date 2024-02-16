@@ -26,7 +26,6 @@ class HookActionCartSave
         try {
             /** @var \Cart $cart */
             $cart = $payload['cart'];
-
             // error fix here
             if (!$cart) {
                 return;
@@ -64,7 +63,7 @@ class HookActionCartSave
      */
     private function silentPush(\PayEyeCartMapping $cartMapping): void
     {
-        $httpClient = new PayEyeHttpClient($this->module->config);
+        $httpClient = PayEyeHttpClient::create($this->module->config);
 
         $request = RefreshCartRequest::create(
             $cartMapping->uuid,
