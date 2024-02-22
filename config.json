@@ -1,4 +1,4 @@
 {
-  "url": "https://prod3a-api.payeye.com/ecommerce-transaction",
-  "deepLinkUrl": "https://payment.payeye.com/order"
+  "url": "https://uat3a-api.payeye.com/ecommerce-transaction",
+  "deepLinkUrl": "https://dev-payment.payeye.com/order"
 }

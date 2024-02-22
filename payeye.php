@@ -7,6 +7,8 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use PayEye\Lib\Auth\AuthConfig;
+use PayEye\Lib\Enum\WidgetButtonStyles;
+use PayEye\Lib\Enum\WidgetModes;
 use PayEye\Lib\Env\Config;
 use PayEye\Lib\Tool\JsonHelper;
 use PrestaShop\Module\PayEye\Admin\Configuration\AdminFormConfiguration;
@@ -81,6 +83,8 @@ class PayEye extends PaymentModule
             ->setSide((string) Configuration::get(ConfigurationField::WIDGET_UI_SIDE))
             ->setSidePosition((int) Configuration::get(ConfigurationField::WIDGET_UI_SIDE_POSITION))
             ->setZIndex((int) Configuration::get(ConfigurationField::WIDGET_UI_ZINDEX))
+            ->setWidgetMode((string) Configuration::get(ConfigurationField::WIDGET_MODE))
+            ->setOnClickButtonStyle((string) Configuration::get(ConfigurationField::ON_CLICK_BUTTON_STYLE))
         ;
         $this->testMode = (bool) Configuration::get(ConfigurationField::TEST_MODE);
     }
@@ -125,7 +129,6 @@ class PayEye extends PaymentModule
             //
             //            Tools::redirect($url);
         }
-
         $this->context->controller->registerJavascript(
             'payeye',
             $this->getPathUri() . 'views/js/script.js',
@@ -161,6 +164,8 @@ class PayEye extends PaymentModule
                         'visible' => $this->widgetUI->getWidgetVisible(),
                     ],
                 ],
+                'widgetMode' => $this->widgetUI->getWidgetMode(),
+                'widgetModeBtnStyle' => $this->widgetUI->getOnClickButtonStyle()
             ],
         ]);
     }
@@ -173,6 +178,39 @@ class PayEye extends PaymentModule
                 false
             );
         }
+        if ('AdminModules' === Tools::getValue('controller') && 'payeye' === Tools::getValue('configure')) {
+            $this->context->controller->addJS(
+                $this->getPathUri() . 'views/js/settings.js?version=' . $this->version,
+                false
+            );
+        }
+
+        $uiFields = ConfigurationField::getUiFields();
+        $hideFloating = [
+            ConfigurationField::ON_CLICK_BUTTON_STYLE
+        ];
+        $showFloating = array_diff($uiFields, $hideFloating, [ConfigurationField::WIDGET_MODE]);
+
+        Media::addJsDef([
+            'payeyeAdmin' => [
+                "toggles" => [
+                    [
+                        'id' => ConfigurationField::WIDGET_MODE,
+                        'values' => [
+                            WidgetModes::FLOATING => [
+                                'hide' => $hideFloating,
+                                'show' => $showFloating
+                            ],
+                            WidgetModes::ON_CLICK => [
+                                'hide' => $showFloating,
+                                'show' => $hideFloating
+                            ],
+                        ]
+                    ]
+
+                ]
+            ],
+        ]);
     }
 
     public function installDefaultConfiguration(): bool
@@ -190,10 +228,12 @@ class PayEye extends PaymentModule
             )
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_BOTTOM, 20)
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_SIDE_POSITION, 20)
-            && Configuration::updateValue(ConfigurationField::WIDGET_UI_SIDE, 'right')
+            && Configuration::updateValue(ConfigurationField::WIDGET_UI_SIDE, 'RIGHT')
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_ZINDEX, 99998)
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, 0)
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE, 1)
+            && Configuration::updateValue(ConfigurationField::WIDGET_MODE, WidgetModes::FLOATING)
+            && Configuration::updateValue(ConfigurationField::ON_CLICK_BUTTON_STYLE, WidgetButtonStyles::STYLED)
             && Configuration::updateValue(ConfigurationField::TEST_MODE, 1);
     }
 
@@ -206,20 +246,22 @@ class PayEye extends PaymentModule
             $shopID = (string) Tools::getValue(ConfigurationField::SHOP_ID);
             $publicKey = (string) Tools::getValue(ConfigurationField::PUBLIC_KEY);
             $privateKey = (string) Tools::getValue(ConfigurationField::PRIVATE_KEY);
-            $widgetUiBottom = (int) Tools::getValue(ConfigurationField::WIDGET_UI_BOTTOM);
-            $widgetUiSidePosition = (int) Tools::getValue(ConfigurationField::WIDGET_UI_SIDE_POSITION);
+            $widgetUiBottom = Tools::getValue(ConfigurationField::WIDGET_UI_BOTTOM);
+            $widgetUiSidePosition = Tools::getValue(ConfigurationField::WIDGET_UI_SIDE_POSITION);
             $widgetUiSide = (string) Tools::getValue(ConfigurationField::WIDGET_UI_SIDE);
-            $widgetUiZIndex = (int) Tools::getValue(ConfigurationField::WIDGET_UI_ZINDEX);
+            $widgetUiZIndex = Tools::getValue(ConfigurationField::WIDGET_UI_ZINDEX);
             $widgetUiMobileOpen = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN);
             $widgetVisible = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE);
+            $widgetMode = (string) Tools::getValue(ConfigurationField::WIDGET_MODE);
+            $onClickButtonStyle = (string) Tools::getValue(ConfigurationField::ON_CLICK_BUTTON_STYLE);
 
-            if ($widgetUiBottom < 0) {
+            if (!is_numeric($widgetUiBottom) || $widgetUiBottom < 0) {
                 $widgetUiBottom = 20;
             }
-            if ($widgetUiSidePosition < 0) {
+            if (!is_numeric($widgetUiSidePosition) || $widgetUiSidePosition < 0) {
                 $widgetUiSidePosition = 20;
             }
-            if ($widgetUiZIndex < 0) {
+            if (!is_numeric($widgetUiZIndex) || $widgetUiZIndex < 0) {
                 $widgetUiZIndex = 99998;
             }
 
@@ -234,6 +276,8 @@ class PayEye extends PaymentModule
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_ZINDEX, $widgetUiZIndex)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, $widgetUiMobileOpen)
                 && Configuration::updateValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE, $widgetVisible)
+                && Configuration::updateValue(ConfigurationField::WIDGET_MODE, $widgetMode)
+                && Configuration::updateValue(ConfigurationField::ON_CLICK_BUTTON_STYLE, $onClickButtonStyle)
                 && Configuration::updateValue(ConfigurationField::SHIPPING_MATCHING, HandleConfiguration::handleMatching(Tools::getAllValues())) // ten update nie działa chyba ze działa ale front to źle wyświetla
             ) {
                 $output = $this->displayConfirmation($this->l('Settings updated'));
@@ -297,6 +341,8 @@ class PayEye extends PaymentModule
             ],
             $this->getConfigFieldsValuesForCarrierMatching($matchShipping),
             [
+                ConfigurationField::WIDGET_MODE => Configuration::get(ConfigurationField::WIDGET_MODE),
+                ConfigurationField::ON_CLICK_BUTTON_STYLE => Configuration::get(ConfigurationField::ON_CLICK_BUTTON_STYLE),
                 ConfigurationField::WIDGET_UI_BOTTOM => Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM),
                 ConfigurationField::WIDGET_UI_SIDE_POSITION => Configuration::get(ConfigurationField::WIDGET_UI_SIDE_POSITION),
                 ConfigurationField::WIDGET_UI_SIDE => Configuration::get(ConfigurationField::WIDGET_UI_SIDE),

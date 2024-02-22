@@ -21,23 +21,30 @@ abstract class ConfigurationField
     public const SHIPPING_MATCHING = 'PAYEYE_SHIPPING_MATCHING';
     public const PAYMENT_STATUS_WAITING = 'PAYEYE_PAYMENT_STATUS_WAITING';
     public const RETURN_REQUEST = 'PAYEYE_RETURN_REQUEST';
+    public const WIDGET_MODE = 'PAYEYE_WIDGET_MODE';
+    public const ON_CLICK_BUTTON_STYLE = 'PAYEYE_ON_CLICK_BUTTON_STYLE';
 
     /**
      * @return string[]
      */
     public static function getUninstallFields(): array
     {
+        $reflectionClass = new \ReflectionClass(ConfigurationField::class);
+        return $reflectionClass->getConstants();
+    }
+    /**
+     * @return string[]
+     */
+    public static function getUiFields(): array
+    {
         return [
-            self::TEST_MODE,
-            self::SHOP_ID,
-            self::PUBLIC_KEY,
-            self::PRIVATE_KEY,
-            self::SHIPPING_MATCHING,
-            self::WIDGET_UI_BOTTOM,
-            self::WIDGET_UI_MOBILE_OPEN,
-            self::WIDGET_UI_SIDE_POSITION,
-            self::WIDGET_UI_SIDE,
-            self::WIDGET_UI_ZINDEX,
+            static::WIDGET_MODE,
+            static::WIDGET_UI_BOTTOM,
+            static::WIDGET_UI_SIDE_POSITION,
+            static::WIDGET_UI_SIDE,
+            static::WIDGET_UI_ZINDEX,
+            static::ON_CLICK_BUTTON_STYLE,
+            static::WIDGET_UI_MOBILE_OPEN,
         ];
     }
 }

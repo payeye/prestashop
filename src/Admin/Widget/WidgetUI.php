@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace PrestaShop\Module\PayEye\Admin\Widget;
 
+use PayEye\Lib\Enum\WidgetButtonStyles;
+use PayEye\Lib\Enum\WidgetModes;
+
 class WidgetUI
 {
     /** @var int */
@@ -17,6 +20,10 @@ class WidgetUI
 
     /** @var bool */
     private $widgetVisible;
+    private $widgetMode = '';
+    private $onClickButtonStyle = '';
+    private $allowedWidgetModes = [WidgetModes::FLOATING, WidgetModes::ON_CLICK];
+    private $allowedOnClickButtonStyles = [WidgetButtonStyles::STYLED, WidgetButtonStyles::CUSTOM];
 
     public function __construct()
     {
@@ -95,5 +102,62 @@ class WidgetUI
         $this->widgetVisible = $widgetVisible;
 
         return $this;
+    }
+    /**
+     * Set the widget mode.
+     *
+     * @param string $widgetMode
+     * @return self
+     */
+    public function setWidgetMode(string $widgetMode): self
+    {
+        if (!in_array($widgetMode, $this->allowedWidgetModes)) {
+            $this->widgetMode = $this->allowedWidgetModes[0];
+            return $this;
+        }
+        $this->widgetMode = $widgetMode;
+        return $this;
+    }
+
+    /**
+     * Get the widget mode.
+     *
+     * @return string
+     */
+    public function getWidgetMode(): string
+    {
+        if (!in_array($this->widgetMode, $this->allowedWidgetModes)) {
+            return $this->allowedWidgetModes[0];
+        }
+        return $this->widgetMode;
+    }
+
+    /**
+     * Set the on-click button style.
+     *
+     * @param string $onClickButtonStyle
+     * @return self
+     */
+    public function setOnClickButtonStyle(string $onClickButtonStyle): self
+    {
+        if (!in_array($onClickButtonStyle, $this->allowedOnClickButtonStyles)) {
+            $this->onClickButtonStyle = $this->allowedOnClickButtonStyles[0];
+            return $this;
+        }
+        $this->onClickButtonStyle = $onClickButtonStyle;
+        return $this;
+    }
+
+    /**
+     * Get the on-click button style.
+     *
+     * @return string
+     */
+    public function getOnClickButtonStyle(): string
+    {
+        if (!in_array($this->onClickButtonStyle , $this->allowedOnClickButtonStyles)) {
+            return $this->allowedOnClickButtonStyles[0];
+        }
+        return $this->onClickButtonStyle;
     }
 }

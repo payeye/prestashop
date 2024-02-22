@@ -3,6 +3,8 @@
 namespace PrestaShop\Module\PayEye\Admin\Configuration;
 
 use PayEye\Lib\Enum\ShippingProvider;
+use PayEye\Lib\Enum\WidgetButtonStyles;
+use PayEye\Lib\Enum\WidgetModes;
 
 class AdminFormConfiguration
 {
@@ -98,6 +100,46 @@ class AdminFormConfiguration
                 ],
                 'input' => [
                     [
+                        'type' => 'select',
+                        'label' => $this->module->l('Widget Mode'),
+                        'desc' => $this->module->l('Choose to use floating widget or inject button in elements with id or class "payeye-run-widget"'),
+                        'name' => ConfigurationField::WIDGET_MODE,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => WidgetModes::FLOATING,   // The value of the 'value' attribute of the <option> tag.
+                                    'name' => $this->module->l('Floating widget'),  // The text inside the <option> tag.
+                                ],
+                                [
+                                    'id_option' => WidgetModes::ON_CLICK,
+                                    'name' => $this->module->l('On click button'),
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->module->l('Widget on click button style'),
+                        'desc' => $this->module->l('Choose to load pre-styled button or simple link'),
+                        'name' => ConfigurationField::ON_CLICK_BUTTON_STYLE,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => WidgetButtonStyles::STYLED,   // The value of the 'value' attribute of the <option> tag.
+                                    'name' => $this->module->l('Pre-styled button'),  // The text inside the <option> tag.
+                                ],
+                                [
+                                    'id_option' => WidgetButtonStyles::CUSTOM,
+                                    'name' => $this->module->l('Simple link'),
+                                ],
+                            ],
+                            'id' => 'id_option',
+                            'name' => 'name',
+                        ],
+                    ],
+                    [
                         'type' => 'switch',
                         'label' => $this->module->l('Mobile launcher first'),
                         'desc' => $this->module->l('Enable launcher first'),
@@ -152,24 +194,7 @@ class AdminFormConfiguration
                         'label' => $this->module->l('Widget z index'),
                         'name' => ConfigurationField::WIDGET_UI_ZINDEX,
                     ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->module->l('Show widget after adding product to cart'),
-                        'desc' => $this->module->l('Add this script to show on-click widget (only on disabled mode): <div id="payeye-run-widget"></div>'),
-                        'name' => ConfigurationField::WIDGET_UI_WIDGET_VISIBLE,
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->module->l('Enabled'),
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->module->l('Disabled'),
-                            ],
-                        ],
-                    ],
+
                 ],
                 'submit' => [
                     'title' => $this->module->l('Save'),
