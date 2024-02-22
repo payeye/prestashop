@@ -2,6 +2,8 @@
 
 ### How to build .zip
 ```shell
+rm -rf vendor payeye
+rm payeye.zip
 composer install --no-dev --optimize-autoloader
 composer archive --format=zip --dir . --file payeye
 mkdir payeye
