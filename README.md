@@ -2,6 +2,8 @@
 
 ### How to build .zip
 ```shell
+rm -rf vendor payeye
+rm payeye.zip
 composer install --no-dev --optimize-autoloader
 composer archive --format=zip --dir . --file payeye
 mkdir payeye
@@ -13,7 +15,7 @@ zip -r payeye.zip payeye
 ### How to find bugs in codebase (https://github.com/phpstan/phpstan)
 - composer run phpstan
 
-### Version 0.1.0-RC
+### Version 1.0.0-RC
 - Added positioning of the widget
 - Added healthcheck endpoint
 - Upgraded payeye/lib to the latest version
