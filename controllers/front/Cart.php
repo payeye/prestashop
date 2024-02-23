@@ -18,6 +18,7 @@ use PrestaShop\Module\PayEye\Cart\Services\CartResponseService;
 use PrestaShop\Module\PayEye\Cart\Services\CartService;
 use PrestaShop\Module\PayEye\Cart\Services\ShippingService;
 use PrestaShop\Module\PayEye\Controller\FrontController;
+use PrestaShop\Module\PayEye\Shared\FilterService;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 
 defined('_PS_VERSION_') || exit;
@@ -113,9 +114,13 @@ class PayEyeCartModuleFrontController extends FrontController
         $currencyId = (int)$this->context->cart->id_currency;
         $currency = new Currency($currencyId);
 
+        $promoCodes = $cartResponseService->promoCodes;
+
+        $promoCodes = FilterService::filterPromoCodes($promoCodes);
+
         $cartResponse = CartResponseModel::builder()
             ->setShop($this->getShop())
-            ->setPromoCodes($cartResponseService->promoCodes)
+            ->setPromoCodes($promoCodes)
             ->setShippingId($shippingId)
             ->setShippingMethods($shippingService->getShippingMethods())
             ->setCart($cartResponseService->payeyeCart)

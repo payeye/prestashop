@@ -47,7 +47,7 @@ class PayEye extends PaymentModule
     {
         $this->name = 'payeye';
         $this->tab = 'payments_gateways';
-        $this->version = '0.1.0';
+        $this->version = '1.0.0';
         $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
         $this->author = 'PayEye';
         $this->controllers = ['Cart', 'Order', 'OrderUpdate', 'Widget', 'Return'];
@@ -103,7 +103,8 @@ class PayEye extends PaymentModule
             && $this->registerHook('actionFrontControllerSetMedia')
             && $this->registerHook('actionAdminControllerSetMedia')
             && $this->registerHook('adminOrder')
-            && $this->registerHook('actionPayEyeApiBeforeCreateOrder');
+            && $this->registerHook('actionPayEyeApiBeforeCreateOrder')
+            && $this->registerHook('actionFilterPayeyePromoCodes');
     }
 
     private function isPrestaShop178OrLater(): bool
@@ -404,7 +405,6 @@ class PayEye extends PaymentModule
 
         return $this->fetch('module:' . $this->name . '/views/templates/admin/return.tpl');
     }
-
     private function getConfigFieldsValuesForCarrierMatching(array $carrierMatching): array
     {
         $matchedShippingProviders = $this->getMatchedShippingProviders();
