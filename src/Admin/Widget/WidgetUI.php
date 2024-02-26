@@ -22,8 +22,15 @@ class WidgetUI
     private $widgetVisible;
     private $widgetMode = '';
     private $onClickButtonStyle = '';
-    private $allowedWidgetModes = [WidgetModes::FLOATING, WidgetModes::ON_CLICK];
-    private $allowedOnClickButtonStyles = [WidgetButtonStyles::STYLED, WidgetButtonStyles::CUSTOM];
+    private $allowedWidgetModes = [
+        WidgetModes::FLOATING,
+        WidgetModes::ON_CLICK
+    ];
+    private $allowedOnClickButtonStyles = [
+        WidgetButtonStyles::STYLED_GREEN,
+        WidgetButtonStyles::STYLED_WHITE,
+        WidgetButtonStyles::CUSTOM
+    ];
 
     public function __construct()
     {
