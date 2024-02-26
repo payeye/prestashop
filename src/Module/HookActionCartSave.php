@@ -63,7 +63,7 @@ class HookActionCartSave
      */
     private function silentPush(\PayEyeCartMapping $cartMapping): void
     {
-        $httpClient = PayEyeHttpClient::create($this->module->config);
+        $httpClient = PayEyeHttpClient::create($this->module->config, $this->module->getApiVersion());
 
         $request = RefreshCartRequest::create(
             $cartMapping->uuid,

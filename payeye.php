@@ -43,6 +43,11 @@ class PayEye extends PaymentModule
     /** @var bool */
     public $testMode;
 
+
+    /** @var int */
+    private $apiVersion = 1;
+
+
     public function __construct()
     {
         $this->name = 'payeye';
@@ -70,23 +75,22 @@ class PayEye extends PaymentModule
         $this->shippingMatchCollection = new ShippingMatchCollection($this->getMatchedShippingProviders());
         $this->config = Config::createFromArray(JsonHelper::getArrayFromJsonFile(__DIR__ . '/config.json'));
         $this->orderStatuses = new OrderStatuses(
-            (int) Configuration::get(ConfigurationField::PAYMENT_STATUS_WAITING),
-            (int) Configuration::get('PS_OS_PAYMENT'),
-            (int) Configuration::get('PS_OS_ERROR'),
-            (int) Configuration::get(ConfigurationField::RETURN_REQUEST)
+            (int)Configuration::get(ConfigurationField::PAYMENT_STATUS_WAITING),
+            (int)Configuration::get('PS_OS_PAYMENT'),
+            (int)Configuration::get('PS_OS_ERROR'),
+            (int)Configuration::get(ConfigurationField::RETURN_REQUEST)
         );
         $this->widgetUI = new WidgetUI();
         $this->widgetUI
-            ->setBottom((int) Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM))
-            ->setMobileOpen((bool) Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN))
-            ->setWidgetVisible((bool) Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE))
-            ->setSide((string) Configuration::get(ConfigurationField::WIDGET_UI_SIDE))
-            ->setSidePosition((int) Configuration::get(ConfigurationField::WIDGET_UI_SIDE_POSITION))
-            ->setZIndex((int) Configuration::get(ConfigurationField::WIDGET_UI_ZINDEX))
-            ->setWidgetMode((string) Configuration::get(ConfigurationField::WIDGET_MODE))
-            ->setOnClickButtonStyle((string) Configuration::get(ConfigurationField::ON_CLICK_BUTTON_STYLE))
-        ;
-        $this->testMode = (bool) Configuration::get(ConfigurationField::TEST_MODE);
+            ->setBottom((int)Configuration::get(ConfigurationField::WIDGET_UI_BOTTOM))
+            ->setMobileOpen((bool)Configuration::get(ConfigurationField::WIDGET_UI_MOBILE_OPEN))
+            ->setWidgetVisible((bool)Configuration::get(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE))
+            ->setSide((string)Configuration::get(ConfigurationField::WIDGET_UI_SIDE))
+            ->setSidePosition((int)Configuration::get(ConfigurationField::WIDGET_UI_SIDE_POSITION))
+            ->setZIndex((int)Configuration::get(ConfigurationField::WIDGET_UI_ZINDEX))
+            ->setWidgetMode((string)Configuration::get(ConfigurationField::WIDGET_MODE))
+            ->setOnClickButtonStyle((string)Configuration::get(ConfigurationField::ON_CLICK_BUTTON_STYLE));
+        $this->testMode = (bool)Configuration::get(ConfigurationField::TEST_MODE);
     }
 
     public function install(): bool
@@ -243,18 +247,18 @@ class PayEye extends PaymentModule
         $output = '';
 
         if (Tools::isSubmit('submit' . $this->name)) {
-            $testMode = (int) Tools::getValue(ConfigurationField::TEST_MODE);
-            $shopID = (string) Tools::getValue(ConfigurationField::SHOP_ID);
-            $publicKey = (string) Tools::getValue(ConfigurationField::PUBLIC_KEY);
-            $privateKey = (string) Tools::getValue(ConfigurationField::PRIVATE_KEY);
+            $testMode = (int)Tools::getValue(ConfigurationField::TEST_MODE);
+            $shopID = (string)Tools::getValue(ConfigurationField::SHOP_ID);
+            $publicKey = (string)Tools::getValue(ConfigurationField::PUBLIC_KEY);
+            $privateKey = (string)Tools::getValue(ConfigurationField::PRIVATE_KEY);
             $widgetUiBottom = Tools::getValue(ConfigurationField::WIDGET_UI_BOTTOM);
             $widgetUiSidePosition = Tools::getValue(ConfigurationField::WIDGET_UI_SIDE_POSITION);
-            $widgetUiSide = (string) Tools::getValue(ConfigurationField::WIDGET_UI_SIDE);
+            $widgetUiSide = (string)Tools::getValue(ConfigurationField::WIDGET_UI_SIDE);
             $widgetUiZIndex = Tools::getValue(ConfigurationField::WIDGET_UI_ZINDEX);
-            $widgetUiMobileOpen = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN);
-            $widgetVisible = (bool) Tools::getValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE);
-            $widgetMode = (string) Tools::getValue(ConfigurationField::WIDGET_MODE);
-            $onClickButtonStyle = (string) Tools::getValue(ConfigurationField::ON_CLICK_BUTTON_STYLE);
+            $widgetUiMobileOpen = (bool)Tools::getValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN);
+            $widgetVisible = (bool)Tools::getValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE);
+            $widgetMode = (string)Tools::getValue(ConfigurationField::WIDGET_MODE);
+            $onClickButtonStyle = (string)Tools::getValue(ConfigurationField::ON_CLICK_BUTTON_STYLE);
 
             if (!is_numeric($widgetUiBottom) || $widgetUiBottom < 0) {
                 $widgetUiBottom = 20;
@@ -388,7 +392,7 @@ class PayEye extends PaymentModule
 
     public function hookAdminOrder($params): string
     {
-        $orderId = (int) $params['id_order'];
+        $orderId = (int)$params['id_order'];
         $order = new Order($orderId);
 
         if ($order->id === null) {
@@ -399,12 +403,13 @@ class PayEye extends PaymentModule
 
         $this->smarty->assign('PAYEYE_RETURNS', [
             'url' => $this->context->link->getAdminLink('AdminAjaxReturn'),
-            'orderId' => (int) $params['id_order'],
+            'orderId' => (int)$params['id_order'],
             'fullName' => $customer->firstname . ' ' . $customer->lastname,
         ]);
 
         return $this->fetch('module:' . $this->name . '/views/templates/admin/return.tpl');
     }
+
     private function getConfigFieldsValuesForCarrierMatching(array $carrierMatching): array
     {
         $matchedShippingProviders = $this->getMatchedShippingProviders();
@@ -445,5 +450,10 @@ class PayEye extends PaymentModule
         }
 
         return $output;
+    }
+
+    public function getApiVersion(): int
+    {
+        return $this->apiVersion;
     }
 }
