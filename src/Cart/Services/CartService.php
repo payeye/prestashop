@@ -16,8 +16,6 @@ class CartService
     }
     public function getTotal()
     {
-        var_dump($this->cart);
-        exit;
         return $this->cart->total;
     }
     public function __construct(\Cart $cart)
