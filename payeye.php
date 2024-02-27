@@ -238,7 +238,7 @@ class PayEye extends PaymentModule
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_MOBILE_OPEN, 0)
             && Configuration::updateValue(ConfigurationField::WIDGET_UI_WIDGET_VISIBLE, 1)
             && Configuration::updateValue(ConfigurationField::WIDGET_MODE, WidgetModes::FLOATING)
-            && Configuration::updateValue(ConfigurationField::ON_CLICK_BUTTON_STYLE, WidgetButtonStyles::STYLED)
+            && Configuration::updateValue(ConfigurationField::ON_CLICK_BUTTON_STYLE, WidgetButtonStyles::STYLED_GREEN)
             && Configuration::updateValue(ConfigurationField::TEST_MODE, 1);
     }
 

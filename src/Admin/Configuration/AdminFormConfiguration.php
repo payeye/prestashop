@@ -127,8 +127,12 @@ class AdminFormConfiguration
                         'options' => [
                             'query' => [
                                 [
-                                    'id_option' => WidgetButtonStyles::STYLED,   // The value of the 'value' attribute of the <option> tag.
-                                    'name' => $this->module->l('Pre-styled button'),  // The text inside the <option> tag.
+                                    'id_option' => WidgetButtonStyles::STYLED_GREEN,   // The value of the 'value' attribute of the <option> tag.
+                                    'name' => $this->module->l('Green Button'),  // The text inside the <option> tag.
+                                ],
+                                [
+                                    'id_option' => WidgetButtonStyles::STYLED_WHITE,   // The value of the 'value' attribute of the <option> tag.
+                                    'name' => $this->module->l('White Button'),  // The text inside the <option> tag.
                                 ],
                                 [
                                     'id_option' => WidgetButtonStyles::CUSTOM,
