@@ -16,6 +16,9 @@ zip -r payeye.zip payeye
 - composer run phpstan
 
 ### Version 1.0.0-RC
+- Implemented an API v2. 
+- Added an endpoint of the plugin status.
+- Notify backend about the plugin status.
 - Added positioning of the widget
 - Added healthcheck endpoint
 - Upgraded payeye/lib to the latest version

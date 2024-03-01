@@ -165,7 +165,7 @@ class PayEyeOrderModuleFrontController extends FrontController
         $cartService = new CartService($cart);
         $shippingService = new ShippingService($checkoutSessionCore->getDeliveryOptions(), $amountService, $this->module, $cartService);
         $cartResponseService = new CartResponseService($cart, $amountService);
-        $shippingId = $cartService->getCartType() !== CartType::VIRTUAL ? $cart->id_carrier : null;
+        $shippingId = $cartService->getCartType() !== CartType::VIRTUAL ? strval($cart->id_carrier) : null;
 
         $currencyId = (int) $cart->id_currency;
         $currency = new Currency($currencyId);

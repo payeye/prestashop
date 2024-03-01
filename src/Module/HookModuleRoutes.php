@@ -24,6 +24,8 @@ class HookModuleRoutes
             'module-payeye-returns' => $this->registerRouter('Return', 'returns'),
             'module-payeye-returns-status' => $this->registerRouter('ReturnStatus', 'returns/status'),
             'module-payeye-healthcheck' => $this->registerRouter('Healthcheck', 'healthcheck'),
+
+            'module-payeye-plugin-status' => $this->registerRouter('PluginStatus', 'plugin/status'),
         ];
     }
 
@@ -31,7 +33,7 @@ class HookModuleRoutes
     {
         return [
             'controller' => $controller,
-            'rule' => 'module-payeye/v1/' . $path,
+            'rule' => 'module-payeye/v' . $this->module->getApiVersion() . '/' . $path,
             'keywords' => [],
             'params' => [
                 'fc' => 'module',
