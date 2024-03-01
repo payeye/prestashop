@@ -7,9 +7,14 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use PayEye\Lib\Auth\AuthConfig;
+use PayEye\Lib\Auth\AuthService;
+use PayEye\Lib\Auth\HashService;
+use PayEye\Lib\Enum\SignatureFrom;
 use PayEye\Lib\Enum\WidgetButtonStyles;
 use PayEye\Lib\Enum\WidgetModes;
 use PayEye\Lib\Env\Config;
+use PayEye\Lib\HttpClient\Model\PluginStatusRequest;
+use PayEye\Lib\HttpClient\PayEyeHttpClient;
 use PayEye\Lib\Tool\JsonHelper;
 use PrestaShop\Module\PayEye\Admin\Configuration\AdminFormConfiguration;
 use PrestaShop\Module\PayEye\Admin\Configuration\ConfigurationField;
@@ -45,7 +50,7 @@ class PayEye extends PaymentModule
 
 
     /** @var int */
-    private $apiVersion = 1;
+    private $apiVersion = 2;
 
 
     public function __construct()
@@ -91,6 +96,18 @@ class PayEye extends PaymentModule
             ->setWidgetMode((string)Configuration::get(ConfigurationField::WIDGET_MODE))
             ->setOnClickButtonStyle((string)Configuration::get(ConfigurationField::ON_CLICK_BUTTON_STYLE));
         $this->testMode = (bool)Configuration::get(ConfigurationField::TEST_MODE);
+    }
+
+    public function disable($force_all = false)
+    {
+        $this->sendPluginStatus('PLUGIN_DEACTIVATED');
+        return parent::disable($force_all);
+    }
+
+    public function enable($force_all = false)
+    {
+        $this->sendPluginStatus('PLUGIN_ACTIVATED');
+        return parent::enable($force_all);
     }
 
     public function install(): bool
@@ -155,7 +172,7 @@ class PayEye extends PaymentModule
             'payeye' => [
                 'side' => $this->widgetUI->getSide(),
                 'platform' => 'PRESTASHOP',
-                'apiUrl' => $this->context->shop->getBaseURL(true) . 'module-payeye/v1',
+                'apiUrl' => $this->context->shop->getBaseURL(true) . 'module-payeye/v' . $this->getApiVersion(),
                 'ui' => [
                     'position' => [
                         'bottom' => $this->widgetUI->getBottom() . 'px',
@@ -242,6 +259,31 @@ class PayEye extends PaymentModule
             && Configuration::updateValue(ConfigurationField::TEST_MODE, 1);
     }
 
+    private function sendPluginStatus($pluginEvent): void
+    {
+        $pluginMode = Configuration::get(ConfigurationField::TEST_MODE) ? 'INTEGRATION' : 'PRODUCTION';
+
+        $request = PluginStatusRequest::create(
+            $this->getApiVersion(),
+            $this->authConfig->getShopId(),
+            $pluginMode,
+            'PHP ' . phpversion(),
+            _PS_VERSION_,
+            $this->version,
+            $pluginEvent,
+            null
+        );
+
+        $auth = AuthService::create(
+            HashService::create($this->authConfig),
+            SignatureFrom::PLUGIN_UPDATE_STATUS_REQUEST,
+            $request->toArray()
+        );
+
+        $httpClient = PayEyeHttpClient::create($this->config, $this->getApiVersion());
+        $httpClient->sendPluginStatus($request, $auth);
+    }
+
     public function getContent(): string
     {
         $output = '';
@@ -289,6 +331,8 @@ class PayEye extends PaymentModule
             } else {
                 $output = $this->displayError($this->l('Invalid Configuration value'));
             }
+
+            $this->sendPluginStatus('PLUGIN_ACTIVATED');
         }
 
         $output .= $this->checkVersion();
@@ -360,6 +404,8 @@ class PayEye extends PaymentModule
 
     public function uninstall(): bool
     {
+        $this->sendPluginStatus('PLUGIN_DEACTIVATED');
+
         foreach (ConfigurationField::getUninstallFields() as $value) {
             Configuration::deleteByName($value);
         }
