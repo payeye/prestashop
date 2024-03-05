@@ -125,6 +125,7 @@ class PayEyeCartModuleFrontController extends FrontController
             ->setShippingMethods($shippingService->getShippingMethods())
             ->setCart($cartResponseService->payeyeCart)
             ->setCurrency($currency->iso_code)
+            ->setSupportedFeatures(['INVOICE'])
             ->setProducts($cartResponseService->products)
             ->setSignatureFrom(SignatureFrom::GET_CART_RESPONSE)
             ->setCartType($cartService->getCartType());

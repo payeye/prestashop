@@ -16,6 +16,7 @@ zip -r payeye.zip payeye
 - composer run phpstan
 
 ### Version 1.0.0-RC
+- Added an invoice support.
 - Implemented an API v2. 
 - Added an endpoint of the plugin status.
 - Notify backend about the plugin status.
