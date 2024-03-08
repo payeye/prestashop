@@ -64,26 +64,27 @@ class PayEyeOrderModuleFrontController extends FrontController
             $address->city = $request->getShipping()->getAddress()->getCity();
             $address->postcode = $request->getShipping()->getAddress()->getPostCode();
 
-            if ($request->hasInvoice()) {
-                $address = new Address($this->context->cart->id_address_invoice);
-                $addressService = AddressService::create($request->getInvoice()->getAddress());
-                $addressService->build();
-                $address->id_country = Country::getByIso($request->getInvoice()->getAddress()->getCountry());
-                $address->alias = ' ';
-                $address->company = $request->getInvoice()->getCompanyName();
-                $address->vat_number = $request->getInvoice()->getTaxId();
-                $address->firstname = ' ';
-                $address->lastname = ' ';
-                $address->address1 = $addressService->getFirstLine();
-                $address->city = $request->getInvoice()->getAddress()->getCity();
-                $address->postcode = $request->getInvoice()->getAddress()->getPostCode();
-            }
-
             if ($request->getShipping()->getPickupPoint()) {
                 $address->address1 = $request->getShipping()->getPickupPoint()->getName();
                 $address->address2 = $addressService->getFirstLine();
             }
             $address->save();
+
+            if ($request->hasInvoice()) {
+                $invoiceAddress = new Address($this->context->cart->id_address_invoice);
+                $invoiceAddressService = AddressService::create($request->getInvoice()->getAddress());
+                $invoiceAddressService->build();
+                $invoiceAddress->id_country = Country::getByIso($request->getInvoice()->getAddress()->getCountry());
+                $invoiceAddress->alias = ' ';
+                $invoiceAddress->company = $request->getInvoice()->getCompanyName();
+                $invoiceAddress->vat_number = $request->getInvoice()->getTaxId();
+                $invoiceAddress->firstname = ' ';
+                $invoiceAddress->lastname = ' ';
+                $invoiceAddress->address1 = $invoiceAddressService->getFirstLine();
+                $invoiceAddress->city = $request->getInvoice()->getAddress()->getCity();
+                $invoiceAddress->postcode = $request->getInvoice()->getAddress()->getPostCode();
+                $invoiceAddress->save();
+            }
 
             \Hook::exec('actionPayEyeApiBeforeCreateOrder', [
                 'shippingProvider' => $request->getShippingProvider(),
