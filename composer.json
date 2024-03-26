@@ -39,7 +39,7 @@
     "ext-http": "*",
     "ext-json": "*",
     "chillerlan/php-qrcode": "^3.4.1",
-    "payeye/lib": "1.23.1"
+    "payeye/lib": "1.23.2"
   },
   "archive": {
     "exclude": [
